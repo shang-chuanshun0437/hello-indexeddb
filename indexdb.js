@@ -6,7 +6,7 @@ class IndexDB {
 		this.storeName = ''
 		this.stores = {}
 
-		this.use({options.storeName, options.primaryKey, options.indexes})
+		this.use(options)
 		this.connect(options)
 	}
 	connect() {
