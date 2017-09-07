@@ -132,7 +132,8 @@ class IndexDB {
 	}
 	add(item) {
 		return new Promise((resolve, reject) => {
-			let primaryKey = this.primaryKey
+			let storeName = this.storeName
+			let primaryKey = this.stores[storeName].primaryKey
 			let key = item[primaryKey]
 			if (!key) {
 				reject(new Error('primaryKey required!'))
@@ -175,7 +176,8 @@ class IndexDB {
 	}
 	put(item) {
 		return new Promise((resolve, reject) => {
-			let primaryKey = this.primaryKey
+			let storeName = this.storeName
+			let primaryKey = this.stores[storeName].primaryKey
 			let key = item[primaryKey]
 			if (!key) {
 				reject(new Error('primaryKey required!'))
