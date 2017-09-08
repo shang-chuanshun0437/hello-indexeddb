@@ -7,7 +7,7 @@ class IndexDB {
 		this.stores = {}
 
 		this.use(options)
-		this.connect(options)
+		this.connect()
 	}
 	connect() {
 		return new Promise((resolve, reject) => {
