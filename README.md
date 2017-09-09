@@ -1,37 +1,77 @@
-# indexdb.js
+idb# indexdb.js
 
 A class packaging indexedDB by javascript, use for webapp localstorage.
 
 ## Usage
 
 ```
-let db = new IndexDB({
+// created a new database:
+let idb = new IndexDB({
   name: 'mydb', // required
-  version: 1, // optional, the beginning of version, read more from `.use()`
-  storeName: 'mystore', // required
-  primaryKey: 'id', // required
-  indexes: [ // optional
+  version: 1, // required
+  stores: [ // required
     {
-      name: 'id',
-      key: 'id', // omissible, if not exists, name will be used as key
-      unique: true, // optional
+      name: 'store1', // required, objectStore name
+      primaryKey: 'id', // required, objectStore keyPath
+      indexes: [ // optional
+        {
+          name: 'id', // required
+          key: 'id', // optional
+          unique: true, // optional
+        },
+        {
+            ...
+        },
+      ],
     },
-    {
-      name: 'std_name',
-    },
+    ...
   ],
+  defaultStoreName: 'store1', // required, which objectStore to use as defaultStore, you can use `.use` method to change objectStore
 })
-db.add({
+
+// add some data, but if you run the script again, error will be threw out, because add method should not add item whose id is exists in this objectStore. It's recommended to use `put` method.
+idb.add({
   id: 1001,
   std_name: 'GoFei',
 })
-db.add({
+idb.add({
   id: 1002,
   std_name: 'Yolanda',
 })
 
-db.get(1002).then(std => alert(`Name of this student is ${std.std_name}`))
+idb.get(1002).then(std => alert(`Name of this student is ${std.std_name}`))
+
+// update database
+idb = new IndexDB({
+    name: 'mydb',
+    version: 2, // notice this, version is updated
+    stores: [
+        {
+            name: 'store1',
+            primaryKey: 'id',
+            // indexes of store1 are deleted
+        },
+        {
+            name: 'store2',
+            primaryKey: 'id',
+            // a new objectStore named store2 is added
+        }
+    ],
+    defaultStoreName: 'store1',
+})
+
+// change to another objectStore
+idb.use('store2')
+// add object into store2
+idb.add({
+    id: '1001',
+    name: 'Li Hua',
+})
 ```
+
+## constructor
+
+Use `new` to creat or update a database, and after you initialize, the database is open.
 
 ## options
 
@@ -45,21 +85,29 @@ The name of a new indexedDB database instance. You can see it in your browser de
 
 The version of this instance. If you do not pass one, 1 will be used. Read more from `.use` method.
 
-### storeName
+### stores
+
+An array to define objectStores.
+
+#### name
 
 Like tables in SQL database, a objectStore in an indexedDB should have a name.
 
-### primaryKey
+#### primaryKey
 
 The primaryKey of every object you put into objectStore.
 
-### indexes
+#### indexes
 
 array, contains:
 
   - name: the name of this index
   - key: the keyPath to use, choose a property of objects those you want to put into
   - unique: whether make the index unique
+
+### defaultStoreName
+
+When a new database is created, which objectStore to use as default.
 
 ## methods
 
@@ -69,13 +117,15 @@ All methods return a Promise instance.
 
 Get a object from indexedDB by its primaryKey.
 
-### query(indexName, value)
+### query(key, value)
 
-Get a object by one name of its indexes and certain value. i.e.
+Get a object by one name of its indexes key and certain value. i.e.
 
 ```
-db.query('std_name', 'GoFei').then(item => console.log(item))
+idb.query('name', 'GoFei').then(item => console.log(item))
 ```
+
+in which, `name` is a index name in your `options.indexes`, not the key, remember this. So you'd better to pass the name and the key same value when you creat database.
 
 Only the first item will be returned even there are several std_name=GoFei in your database.
 
@@ -99,26 +149,30 @@ Delete a object by its primaryKey.
 
 Close current connect.
 
-### use({storeName, primaryKey, indexes})
+### use(storeName)
 
-Change objectStore.
+Change to use another objectStore as current objectStore.
 
-1> switch to a exists objectStore, only pass `storeName`.
-
-2> modify current objectStore indexes, use it, pass `storeName` and `indexes`. Notice: primaryKey can NOT be modified. And db.version will be increased 1.
-
-2> add a new objectStore, use it, pass `storeName` and `primaryKey` and `indexes(optional)`. After created, objectStore will be switched to be new objectStore, and db.version will be increased 1.
-
-### $store()
+### $store(method = 'readonly')
 
 Get current objectStore, you should know the original [indexedDB operation](https://developer.mozilla.org/en-US/docs/Web/API/IDBObjectStore).
 
 ```
-db.$store().then(objectStore => {
+idb.$store().then(objectStore => {
   let request = objectStore.get(1001)
   request.onsuccess = e => {
     ...
   }
+})
+```
+
+### $connect()
+
+Get db instance.
+
+```
+idb.$connect().then(db => {
+    console.log(db.objectStoreNames) // you can know all objectStores in your database
 })
 ```
 
