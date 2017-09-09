@@ -10,7 +10,7 @@ class IndexDB {
 			stores.forEach(item => {
 				let objectStore = null
 				if (db.objectStoreNames.contains(item.name)) {
-					objectStore = e.target.transaction.objectStore(storeName)
+					objectStore = e.target.transaction.objectStore(item.name)
 				}
 				else {
 					objectStore = db.createObjectStore(item.name, {keyPath: item.primaryKey})
@@ -19,7 +19,7 @@ class IndexDB {
 				// delete old indexes
 				let indexNames = objectStore.indexNames
 				if (indexNames && indexNames.length) {
-					indexNames.forEach(item => objectStore.deleteIndex(item))
+					Array.from(indexNames).forEach(item => objectStore.deleteIndex(item))
 				}
 
 				// add new indexes

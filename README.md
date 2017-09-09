@@ -9,7 +9,7 @@ A class packaging indexedDB by javascript, use for webapp localstorage.
 let idb = new IndexDB({
   name: 'mydb', // required
   version: 1, // required
-  stores: [ // required
+  stores: [ // optional, when you create database, it is required, but when you open an exists database it is not needed
     {
       name: 'store1', // required, objectStore name
       primaryKey: 'id', // required, objectStore keyPath
@@ -84,6 +84,8 @@ The name of a new indexedDB database instance. You can see it in your browser de
 ### version
 
 The version of this instance. If you do not pass one, 1 will be used. Read more from `.use` method.
+
+When to change the version? When you update your js code and want to update the database structure.
 
 ### stores
 
