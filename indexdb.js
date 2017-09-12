@@ -31,6 +31,12 @@ class IndexDB {
 			})
 		}
 	}
+	/**
+	 * @desc switch objectStore
+	 */
+	use(storeName) {
+		this.currentStoreName = storeName
+	}
 	$connect() {
 		return new Promise((resolve, reject) => {
 			let request = indexedDB.open(this.name, this.version)
@@ -41,12 +47,6 @@ class IndexDB {
 				resolve(e.target.result)
 			}
 		})
-	}
-	/**
-	 * @desc switch objectStore
-	 */
-	use(storeName) {
-		this.currentStoreName = storeName
 	}
 	$store(mode = 'readonly') {
 		return new Promise((resolve, reject) => {
@@ -62,9 +62,7 @@ class IndexDB {
 	}
 	get(key) {
 		return new Promise((resolve, reject) => {
-			this.$connect().then(db => {
-				let storeName = this.currentStoreName
-				let objectStore = db.transaction([storeName], 'readonly').objectStore(storeName)
+			this.$store().then(objectStore => {
 				let request = objectStore.get(key)
 				request.onsuccess = e => {
 					resolve(e.target.result)
@@ -83,9 +81,7 @@ class IndexDB {
 	 */
 	query(key, value) {
 		return Promise((resolve, reject) => {
-			this.$connect().then(db => {
-				let storeName = this.currentStoreName
-				let objectStore = db.transaction([storeName], 'readonly').objectStore(storeName)
+			this.$store().then(objectStore => {
 				let objectIndex = objectStore.index(key)
 				let request = objectIndex.get(value)
 				request.onsuccess = e => {
@@ -102,9 +98,7 @@ class IndexDB {
 	}
 	add(item) {
 		return new Promise((resolve, reject) => {
-			this.$connect().then(db => {
-				let storeName = this.currentStoreName
-				let objectStore = db.transaction([storeName], 'readwrite').objectStore(storeName)
+			this.$store('readwrite').then(objectStore => {
 				let request = objectStore.add(item)
 				request.onsuccess = e => {
 					resolve(e.target.result)
@@ -120,9 +114,7 @@ class IndexDB {
 	}
 	put(item) {
 		return new Promise((resolve, reject) => {
-			this.$connect().then(db => {
-				let storeName = this.currentStoreName
-				let objectStore = db.transaction([storeName], 'readwrite').objectStore(storeName)
+			this.$store('readwrite').then(objectStore => {
 				let request = objectStore.put(item)
 				request.onsuccess = e => {
 					resolve(e.target.result)
@@ -138,10 +130,8 @@ class IndexDB {
 	}
 	del(key) {
 		return new Promise((resolve, reject) => {
-			this.$connect().then(db => {
-				let storeName = this.currentStoreName
-				let objectStore = db.transaction([storeName], 'readwrite').objectStore(storeName)
-				let request = objectStore.delete(key)
+			this.$store('readwrite').then(objectStore => {
+				let request = objectStore.delete(item)
 				request.onsuccess = e => {
 					resolve(e.target.result)
 				}
@@ -156,9 +146,7 @@ class IndexDB {
 	}
 	all() {
 		return new Promise((resolve, reject) => {
-			this.$connect().then(db => {
-				let storeName = this.currentStoreName
-				let objectStore = db.transaction([storeName], 'readonly').objectStore(storeName)
+			this.$store().then(objectStore => {
 				let request = objectStore.openCursor()
 				let results = []
 				request.onsuccess = e => {
@@ -170,6 +158,22 @@ class IndexDB {
 					else {
 						resolve(results)
 					}
+				}
+				request.onerror = e => {
+					reject(e)
+				}
+			})
+			.catch(e => {
+				reject(e)
+			})
+		})
+	}
+	count() {
+		return new Promise((resolve, reject) => {
+			this.$store().then(objectStore => {
+				let request = objectStore.count()
+				request.onsuccess = e => {
+					resolve(e.target.result)
 				}
 				request.onerror = e => {
 					reject(e)

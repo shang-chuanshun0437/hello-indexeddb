@@ -135,6 +135,10 @@ Only the first item will be returned even there are several std_name=GoFei in yo
 
 Get all records from your objectStore.
 
+### count()
+
+Get all records count.
+
 ### add(item)
 
 Append a object into your database. Notice, your item's properties should contain primaryKey.
