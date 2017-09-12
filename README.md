@@ -155,9 +155,16 @@ Delete a object by its primaryKey.
 
 Close current connect.
 
-### use(storeName)
+### $use(storeName)
 
-Change to use another objectStore as current objectStore.
+Change to use another objectStore as current objectStore. Return instance:
+
+```
+idb.$use('mystore2').add({
+  id: 23,
+  name: 'Go Six',
+})
+```
 
 ### $store(method = 'readonly')
 

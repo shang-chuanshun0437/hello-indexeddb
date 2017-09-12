@@ -34,7 +34,7 @@ class IndexDB {
 	/**
 	 * @desc switch objectStore
 	 */
-	use(storeName) {
+	$use(storeName) {
 		this.currentStoreName = storeName
 		return this
 	}
