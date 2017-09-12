@@ -36,6 +36,7 @@ class IndexDB {
 	 */
 	use(storeName) {
 		this.currentStoreName = storeName
+		return this
 	}
 	$connect() {
 		return new Promise((resolve, reject) => {
