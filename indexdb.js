@@ -7,9 +7,12 @@ class IndexDB {
 		let request = indexedDB.open(name, version)
 		request.onupgradeneeded = e => {
 			let db = e.target.result
+      let objectStoreNames = Array.from(db.objectStoreNames)
+      let thisStoreNames = []
+
 			stores.forEach(item => {
 				let objectStore = null
-				if (db.objectStoreNames.contains(item.name)) {
+				if (objectStoreNames.indexOf(item.name) > -1) {
 					objectStore = e.target.transaction.objectStore(item.name)
 				}
 				else {
@@ -28,7 +31,18 @@ class IndexDB {
 						objectStore.createIndex(item.name, item.key || item.name, {unique: item.unique})
 					})
 				}
+
+				thisStoreNames.push(item.name)
 			})
+
+			// delete objectStores which is not in config information
+			if (objectStoreNames) {
+				objectStoreNames.forEach(item => {
+					if (thisStoreNames.indexOf(item) === -1) {
+						db.deleteObjectStore(item)
+					}
+				})
+			}
 		}
 	}
 	/**
