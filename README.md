@@ -131,6 +131,8 @@ in which, `name` is a index name in your `options.indexes`, not the key, remembe
 
 Only the first item will be returned even there are several std_name=GoFei in your database.
 
+Return an array, which contains objects with key equals value.
+
 ### all()
 
 Get all records from your objectStore.

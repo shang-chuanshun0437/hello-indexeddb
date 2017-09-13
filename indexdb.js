@@ -98,9 +98,19 @@ class IndexDB {
 		return Promise((resolve, reject) => {
 			this.$store().then(objectStore => {
 				let objectIndex = objectStore.index(key)
-				let request = objectIndex.get(value)
+				let request = objectIndex.openCursor()
+				let results = []
 				request.onsuccess = e => {
-					resolve(e.target.result)
+					let cursor = e.target.result
+					if (cursor) {
+						if (cursor.value[key] === value) {
+							results.push(cursor.value)
+						}
+						cursor.continue()
+					}
+					else {
+						resolve(results)
+					}
 				}
 				request.onerror = e => {
 					reject(e)
