@@ -1,4 +1,4 @@
-idb# indexdb.js
+# indexdb.js
 
 A class packaging indexedDB by javascript, use for webapp localstorage.
 
