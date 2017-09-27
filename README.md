@@ -2,6 +2,19 @@ idb# indexdb.js
 
 A class packaging indexedDB by javascript, use for webapp localstorage.
 
+
+## Install
+
+```
+npm install indexdb.js
+```
+
+or
+
+```
+<script src="indexdb.js"></script>
+```
+
 ## Usage
 
 ```

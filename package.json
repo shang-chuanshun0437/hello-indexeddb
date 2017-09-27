@@ -1,0 +1,16 @@
+{
+  "name": "indexdb.js",
+  "version": "0.1.0",
+  "description": "A library to operate IndexedDB easily.",
+  "main": "indexdb.js",
+  "scripts": {},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tangshuang/indexdb.js.git"
+  },
+  "keywords": [
+    "IndexedDB"
+  ],
+  "author": "tangshuang",
+  "license": "MIT"
+}

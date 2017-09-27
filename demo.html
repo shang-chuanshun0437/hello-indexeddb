@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<script src="indexdb.js"></script>
+<script>
+let db = new IndexDB({
+    name: 'mydb',
+    version: 7,
+    stores: [
+        {
+            name: 'mystore1',
+            primaryKey: 'id',
+        },
+        {
+            name: 'mystudents',
+            primaryKey: 'id',
+            indexes: [
+                {
+                    name: 'id',
+                    key: 'id',
+                    unique: true,
+                },
+                {
+                    name: 'name',
+                },
+            ],
+        },
+    ],
+    defaultStoreName: 'mystudents',
+})
+db.$store().then(objectStore => {
+    console.log(objectStore.indexNames)
+})
+
+</script>

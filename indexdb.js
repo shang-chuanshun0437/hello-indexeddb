@@ -1,3 +1,6 @@
+!function(root) {
+// module begin ==>
+
 class IndexDB {
 	constructor({name, version, stores, defaultStoreName}) {
 		this.name = name
@@ -215,3 +218,19 @@ class IndexDB {
 		})
 	}
 }
+
+// umd module resolution
+if (typeof define == 'function' && (define.cmd || define.amd)) { // amd & cmd
+	define(function(require, exports, module) {
+		module.exports = IndexDB
+	})
+}
+else if (typeof module !== 'undefined' && module.exports) {
+	module.exports = IndexDB
+}
+else {
+	root.IndexDB = IndexDB
+}
+
+// <== module end
+} (this || (typeof window !== 'undefined' ? window : global));
