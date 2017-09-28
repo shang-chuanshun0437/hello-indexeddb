@@ -42,7 +42,7 @@ let idb = new IndexDB({
   defaultStoreName: 'store1', // required, which objectStore to use as defaultStore, you can use `.use` method to change objectStore
 })
 
-// add some data, but if you run the script again, error will be threw out, because add method should not add item whose id is exists in this objectStore. It's recommended to use `put` method.
+// add some data, but if you run the script again, error will be threw out, because add method should not add item whose id is exists in this objectStore. It's recommended to use `update` method.
 idb.add({
   id: 1001,
   std_name: 'GoFei',
@@ -158,9 +158,13 @@ Get all records count.
 
 Append a object into your database. Notice, your item's properties should contain primaryKey.
 
-### put(item)
+### update(item)
 
 Update a object in your database. Notice, your item's properties should contain primaryKey. Or inserts a new record if the given item does not already exist.
+
+### put(items)
+
+Like `update`, but parameter is an array. It means you can pass multiple items into the db once.
 
 ### del(key)
 

@@ -29,5 +29,8 @@ let db = new IndexDB({
 db.$store().then(objectStore => {
     console.log(objectStore.indexNames)
 })
-
+db.put([
+    { id: 10001, name: 'gaofei' },
+    { id: 10003, name: 'xiaohua' }
+])
 </script>

@@ -140,7 +140,7 @@ class IndexDB {
 			})
 		})
 	}
-	put(item) {
+	update(item) {
 		return new Promise((resolve, reject) => {
 			this.$store('readwrite').then(objectStore => {
 				let request = objectStore.put(item)
@@ -155,6 +155,26 @@ class IndexDB {
 				reject(e)
 			})
 		})
+	}
+	put(items) {
+		let requests = [
+			this.$store('readwrite').then(objectStore => {
+				items.forEach(item => {
+					requests.push(
+						new Promise((resolve, reject) => {
+							let request = objectStore.put(item)
+							request.onsuccess = e => {
+								resolve(e.target.result)
+							}
+							request.onerror = e => {
+								reject(e)
+							}
+						})
+					)
+				})
+			})
+		]
+		return Promise.all(requests)
 	}
 	del(key) {
 		return new Promise((resolve, reject) => {
