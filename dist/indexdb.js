@@ -1,5 +1,5 @@
 !function(root) {
-// module begin ==>
+
 
 class IndexDB {
 	constructor({name, version, stores, defaultStoreName}) {
@@ -10,8 +10,8 @@ class IndexDB {
 		let request = indexedDB.open(name, version)
 		request.onupgradeneeded = e => {
 			let db = e.target.result
-      let objectStoreNames = Array.from(db.objectStoreNames)
-      let thisStoreNames = []
+			let objectStoreNames = Array.from(db.objectStoreNames)
+			let thisStoreNames = []
 
 			stores.forEach(item => {
 				let objectStore = null
@@ -67,9 +67,9 @@ class IndexDB {
 		})
 	}
 	$store(mode = 'readonly') {
+		let storeName = this.currentStoreName
 		return new Promise((resolve, reject) => {
 			this.$connect().then(db => {
-				let storeName = this.currentStoreName
 				let objectStore = db.transaction([storeName], mode).objectStore(storeName)
 				resolve(objectStore)
 			})
@@ -157,24 +157,29 @@ class IndexDB {
 		})
 	}
 	put(items) {
-		let requests = [
+		return new Promise((resolve, reject) => {
 			this.$store('readwrite').then(objectStore => {
+				let requests = []
 				items.forEach(item => {
 					requests.push(
-						new Promise((resolve, reject) => {
+						new Promise((res, rej) => {
 							let request = objectStore.put(item)
 							request.onsuccess = e => {
-								resolve(e.target.result)
+								res(e.target.result)
 							}
 							request.onerror = e => {
-								reject(e)
+								rej(e)
 							}
 						})
 					)
 				})
+				Promise.all(requests)
+					.then((...args) => resolve(args))
+					.catch(e => reject(e))
 			})
-		]
-		return Promise.all(requests)
+			.catch(e => reject(e))
+		})
+		
 	}
 	del(key) {
 		return new Promise((resolve, reject) => {
@@ -239,18 +244,23 @@ class IndexDB {
 	}
 }
 
-// umd module resolution
+
 if (typeof define == 'function' && (define.cmd || define.amd)) { // amd & cmd
-	define(function(require, exports, module) {
-		module.exports = IndexDB
-	})
+  define(function(require, exports, module) {
+    module.exports = IndexDB
+  })
 }
 else if (typeof module !== 'undefined' && module.exports) {
-	module.exports = IndexDB
+  module.exports = IndexDB
 }
 else {
-	root.IndexDB = IndexDB
+  root.IndexDB = IndexDB
 }
 
-// <== module end
-} (this || (typeof window !== 'undefined' ? window : global));
+
+} (
+  typeof self !== 'undefined' ? self : // worker
+  typeof window !== 'undefined' ? window : // window
+  typeof global !== 'undefined' ? global : // node
+  this
+);

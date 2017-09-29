@@ -1,9 +1,11 @@
 {
   "name": "indexdb.js",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "A library to operate IndexedDB easily.",
   "main": "indexdb.js",
-  "scripts": {},
+  "scripts": {
+    "build": "node build"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/tangshuang/indexdb.js.git"
@@ -12,5 +14,9 @@
     "IndexedDB"
   ],
   "author": "tangshuang",
-  "license": "MIT"
+  "license": "MIT",
+  "devDependencies": {
+    "gulp": "^3.9.1",
+    "gulp-bufferify": "0.0.8"
+  }
 }
