@@ -1,8 +1,8 @@
 {
   "name": "indexdb.js",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "A library to operate IndexedDB easily.",
-  "main": "indexdb.js",
+  "main": "dist/indexdb.js",
   "scripts": {
     "build": "node build"
   },
