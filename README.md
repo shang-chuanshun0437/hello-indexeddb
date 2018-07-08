@@ -110,7 +110,16 @@ Get a object from indexedDB by its primaryKey.
 let obj = await idb.get('key1')
 ```
 
-### query(key, value)
+### find(key, value)
+
+Get the first object whose index name is `key` and value is `value`.
+Notice, `key` is a index name.
+
+```
+let obj = await idb.find('name', 'tomy')
+```
+
+### query(key, value, compare)
 
 Get objects by one name of its indexes key and certain value. i.e.
 
@@ -118,10 +127,50 @@ Get objects by one name of its indexes key and certain value. i.e.
 let objs = await idb.query('name', 'GoFei')
 ```
 
-In which, `name` is a index name in your `options.indexes`, not the key, remember this. 
+In which, `name` is an index name in your `options.indexes`, not the key, remember this. 
 So you'd better to pass the name and the key same value when you creat database.
 
 Return an array, which contains objects with key equals value.
+
+**compare**
+
+Choose from `>` `>=` `<` `<=` `!=` `=` `%`. 
+`%` means 'LIKE', only used for string search.
+Notice `!=` will use `!==`, `=` will use `===`, so you should pass right typeof of value.
+
+### select([{ key, value, compare, optional }])
+
+Select objects with multiple conditions. Pass conditions as an array, each condition item contains:
+
+- key: an index name
+- value: the value of index
+- compare: `>` `>=` `<` `<=` `!=` `=` `%`
+- optional: wether to make this condition to be an optional, default 'false' which means 'AND' in SQL.
+
+Examples:
+
+```
+// to find objects which amount>10 AND color='red'
+let objs = await idb.select([
+  { key: 'amount', value: 10, compare: '>' },
+  { key: 'color', value: 'red' },
+])
+
+// to find objects which amount>10 OR amount<6
+let objs = await idb.select([
+  { key: 'amount', value: 10, compare: '>', optional: true },
+  { key: 'amount', value: 6, compare: '<', optional: true },
+])
+
+// to find objects which amount>10 AND (color='red' OR color='blue')
+let objs = await idb.select([
+  { key: 'amount', value: 10, compare: '>' },
+  { key: 'color', value: 'red', optional: true },
+  { key: 'color', value: 'blue', optional: true },
+])
+```
+
+NOTICE: the final logic is `A AND B AND C AND (D OR E OR F)`.
 
 ### all()
 
@@ -142,7 +191,7 @@ The item whose primaryKey exists in the objectStore, an error will be thrown.
 Update a object in your database. 
 Notice, your item's properties should contain primaryKey. 
 If the object does not exist, it will be added into the database.
-So it is better to use `put` then `add`.
+So it is better to use `put` instead of `add` unless you know what you are doing.
 
 ### delete(key)
 

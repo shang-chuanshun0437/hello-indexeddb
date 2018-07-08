@@ -1,6 +1,6 @@
 {
   "name": "hello-indexeddb",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "description": "A library to operate IndexedDB easily.",
   "main": "dist/hello-indexeddb.js",
   "scripts": {

@@ -62,9 +62,19 @@
     let obj2 = await idb.get('2')
     console.log('[test:] get successfully.', obj2)
 
-    // test query
     await idb.put({ id: '3', name: 'tomy', age: 10 })
     await idb.put({ id: '4', name: 'goda', age: 10 })
+
+    // test find
+    try {
+        let obj = await idb.find('age', 10)
+        console.log('[test:] find successfully.', obj)
+    }
+    catch(e) {
+        console.error('[test:] find error.', e)
+    }
+
+    // test query
     try {
         let objs = await idb.query('age', 10)
         console.log('[test:] query successfully.', objs)
@@ -73,14 +83,35 @@
         console.error('[test:] query error.', e)
     }
 
+    // test query compare
+    try {
+        let objs = await idb.query('age', 15, '>')
+        console.log('[test:] query >15 successfully.', objs)
+    }
+    catch(e) {
+        console.error('[test:] query error.', e)
+    }
+
+    // test select
+    try {
+        let objs = await idb.select([
+            { key: 'age', value: 22, compare: '>', optional: true },
+            { key: 'age', value: 10, compare: '=', optional: true },
+        ])
+        console.log('[test:] select successfully.', objs)
+    }
+    catch(e) {
+        console.error('[test:] select error.', e)
+    }
+
     // test all
     await idb.put({ id: '5', name: 'tiny', age: 12 })
     try {
         let objs = await idb.all()
-        console.log('[test:] query all successfully.', objs)
+        console.log('[test:] all successfully.', objs)
     }
     catch(e) {
-        console.error('[test:] query all error.', e)
+        console.error('[test:] all error.', e)
     }
 
     // test count
