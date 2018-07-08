@@ -1,14 +1,14 @@
 {
-  "name": "indexdb.js",
-  "version": "0.3.1",
+  "name": "hello-indexeddb",
+  "version": "1.0.0",
   "description": "A library to operate IndexedDB easily.",
-  "main": "dist/indexdb.js",
+  "main": "dist/hello-indexeddb.js",
   "scripts": {
-    "build": "node build"
+    "build": "node build.js"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/tangshuang/indexdb.js.git"
+    "url": "git+https://github.com/tangshuang/hello-indexeddb.git"
   },
   "keywords": [
     "IndexedDB"
@@ -16,7 +16,12 @@
   "author": "tangshuang",
   "license": "MIT",
   "devDependencies": {
+    "babel-core": "^6.26.3",
+    "babel-plugin-transform-async-to-promises": "^0.7.0",
+    "babel-plugin-transform-es2015-classes": "^6.24.1",
+    "babel-preset-env": "^1.7.0",
     "gulp": "^3.9.1",
+    "gulp-babel": "^7.0.1",
     "gulp-bufferify": "0.0.8"
   }
 }

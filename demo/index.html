@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<script src="../dist/hello-indexeddb.js"></script>
+<script>
+(async function() {
+    let idb = new HelloIndexedDB({
+        name: 'mydb',
+        version: 2,
+        stores: [
+            {
+                name: 'departs',
+                primaryKey: 'id',
+            },
+            {
+                name: 'students',
+                primaryKey: 'id',
+                indexes: [
+                    {
+                        name: 'id',
+                        key: 'id',
+                        unique: true,
+                    },
+                    {
+                        name: 'name',
+                    },
+                    {
+                        name: 'age',
+                    },
+                ],
+            },
+        ],
+        use: 'students',
+    })
+
+    // test add
+    try {
+        await idb.add({ id: '1', name: 'toda', age: 10 })
+        console.log('[test:] add successfully.')
+    }
+    catch(e) {
+        console.error('[test:] add error.', e.srcElement.error.message)
+    }
+
+    // test put
+    try {
+        await idb.put({ id: '2', name: 'sood', age: 21, time: Date.now() })
+        console.log('[test:] put successfully.')
+    }
+    catch(e) {
+        console.error('[test:] put error.', e.srcElement.error.message)
+    }
+
+    // test delete
+    try {
+        await idb.delete('1')
+        console.log('[test:] delete successfully.')
+    }
+    catch(e) {
+        console.error('[test:] delete error.', e.srcElement.error.message)
+    }
+
+    // test get
+    let obj2 = await idb.get('2')
+    console.log('[test:] get successfully.', obj2)
+
+    // test query
+    await idb.put({ id: '3', name: 'tomy', age: 10 })
+    await idb.put({ id: '4', name: 'goda', age: 10 })
+    try {
+        let objs = await idb.query('age', 10)
+        console.log('[test:] query successfully.', objs)
+    }
+    catch(e) {
+        console.error('[test:] query error.', e)
+    }
+
+    // test all
+    await idb.put({ id: '5', name: 'tiny', age: 12 })
+    try {
+        let objs = await idb.all()
+        console.log('[test:] query all successfully.', objs)
+    }
+    catch(e) {
+        console.error('[test:] query all error.', e)
+    }
+
+    // test count
+    try {
+        let objs = await idb.count()
+        console.log('[test:] count successfully.', objs)
+    }
+    catch(e) {
+        console.error('[test:] count error.', e)
+    }
+
+    // test use
+    let idb2 = idb.use('departs')
+    await idb2.put({ id: '1', name: 'doge' })
+    let v = await idb2.all()
+    console.log('[test:] use.', v)
+})();
+</script>

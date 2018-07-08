@@ -1,32 +1,48 @@
-const gulp = require('gulp')
-const bufferify = require('gulp-bufferify').default
+var gulp = require('gulp')
+var bufferify = require('gulp-bufferify').default
+var babel = require('gulp-babel')
 
-gulp.src('src/*.js')
-  .pipe(bufferify(content => {
-    return `!function(root) {
+var namespace = 'HelloIndexedDB'
+var entryfile = 'src/hello-indexeddb.js'
 
+var babelconfig = {
+  presets: [
+    ['env']
+  ],
+  plugins: [
+    'transform-async-to-promises',
+    'transform-es2015-classes'
+  ]
+}
+
+gulp.src(entryfile)
+  .pipe(babel(babelconfig))
+  .pipe(bufferify(function(content) {
+
+    content = content.replace(/Object\.defineProperty\(exports,[\s\S]+?\);/gm, '')
+    content = content.replace(`exports.default = ${namespace};`, '')
+    content = `
+!function(root) {
 
 ${content}
 
-
-if (typeof define == 'function' && (define.cmd || define.amd)) { // amd & cmd
+if (typeof define === 'function' && (define.cmd || define.amd)) { // amd | cmd
   define(function(require, exports, module) {
-    module.exports = IndexDB
-  })
+    module.exports = ${namespace};
+  });
 }
 else if (typeof module !== 'undefined' && module.exports) {
-  module.exports = IndexDB
+  module.exports = ${namespace};
 }
 else {
-  root.IndexDB = IndexDB
+  root.${namespace} = ${namespace};
 }
 
+} (this || window);
+    `
+    content = content.trim()
+    content += "\n"
 
-} (
-  typeof self !== 'undefined' ? self : // worker
-  typeof window !== 'undefined' ? window : // window
-  typeof global !== 'undefined' ? global : // node
-  this
-);`
+    return content
   }))
   .pipe(gulp.dest('dist'))
