@@ -97,5 +97,20 @@
     await idb2.put({ id: '1', name: 'doge' })
     let v = await idb2.all()
     console.log('[test:] use.', v)
+
+    // test put multiple
+    let promises = []
+    promises.push(
+        idb.put({ id: '20', name: 'tony', age: 23 })
+    )
+    promises.push(
+        idb.put({ id: '21', name: 'sona', age: 23 })
+    )
+    promises.push(
+        idb.put({ id: '22', name: 'godt', age: 23 })
+    )
+    await Promise.all(promises)
+    let objs = await idb.query('age', 23)
+    console.log('[test:] multiple put successfully.', objs)
 })();
 </script>

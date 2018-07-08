@@ -32,14 +32,17 @@ AMD & CMD:
 
 ```
 define(function(require, exports, module) {
-  const HelloIndexedDB = require('./node_modules/hello-indexeddb/dist/hello-indexeddb.js')
+  const HelloIndexedDB = require('hello-indexeddb')
 })
 ```
 
 Normal Browsers:
 
 ```
-window.HelloIndexedDB
+<script src="dist/hello-indexeddb.js"></script>
+<script>
+let idb = new HelloIndexedDB(...)
+</scirpt>
 ```
 
 To use:
