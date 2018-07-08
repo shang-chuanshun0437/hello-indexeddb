@@ -1,5 +1,22 @@
 export default class HelloIndexedDB {
-	constructor({ name, version, stores, use }) {
+	constructor(options) {
+		if (!options) {
+			options = {
+				name: 'HelloIndexedDB', 
+				version: 1, 
+				stores: [
+					{ 
+						name: 'HelloIndexedDB', 
+						primaryKey: 'id',
+						autoIncrement: true,
+					},
+				], 
+				use: 'HelloIndexedDB',
+			}
+		}
+
+		let { name, version, stores, use } = options
+
 		this.name = name
 		this.version = version
 
@@ -18,7 +35,7 @@ export default class HelloIndexedDB {
 					objectStore = e.target.transaction.objectStore(item.name)
 				}
 				else {
-					objectStore = db.createObjectStore(item.name, {keyPath: item.primaryKey})
+					objectStore = db.createObjectStore(item.name, { keyPath: item.primaryKey, autoIncrement: item.autoIncrement })
 				}
 
 				// delete old indexes

@@ -42,7 +42,7 @@
 
     // test put
     try {
-        await idb.put({ id: '2', name: 'sood', age: 21, time: Date.now() })
+        await idb.put({ id: '2', name: 'sood', age: 21, time: new Date() })
         console.log('[test:] put successfully.')
     }
     catch(e) {
@@ -143,5 +143,10 @@
     await Promise.all(promises)
     let objs = await idb.query('age', 23)
     console.log('[test:] multiple put successfully.', objs)
+
+    // test 
+    // let idbx = new HelloIndexedDB()
+    // await idbx.put({ name: 'xxx' })
+    
 })();
 </script>
