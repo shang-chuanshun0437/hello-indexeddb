@@ -1,21 +1,25 @@
 export default class HelloIndexedDB {
 	constructor(options) {
-		if (!options) {
-			options = {
-				name: 'HelloIndexedDB', 
-				version: 1, 
-				stores: [
-					{ 
-						name: 'HelloIndexedDB', 
-						primaryKey: 'id',
-						autoIncrement: true,
-					},
-				], 
-				use: 'HelloIndexedDB',
-			}
-		}
+		let { name, version, stores, use, key } = options
 
-		let { name, version, stores, use } = options
+		if (!name) {
+			name = 'HelloIndexedDB'
+		}
+		if (!version) {
+			version = 1
+		}
+		if (!stores) {
+			stores = [
+				{ 
+					name: 'HelloIndexedDB', 
+					primaryKey: key || 'id',
+					autoIncrement: !key,
+				},
+			]
+		}
+		if (!use) {
+			use = 'HelloIndexedDB'
+		}
 
 		this.name = name
 		this.version = version

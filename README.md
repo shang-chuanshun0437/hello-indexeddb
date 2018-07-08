@@ -119,6 +119,8 @@ Notice, `key` is a index name.
 let obj = await idb.find('name', 'tomy')
 ```
 
+If you find a key which is not in indexes, no results will return.
+
 ### query(key, value, compare)
 
 Get objects by one name of its indexes key and certain value. i.e.
@@ -131,6 +133,7 @@ In which, `name` is an index name in your `options.indexes`, not the key, rememb
 So you'd better to pass the name and the key same value when you creat database.
 
 Return an array, which contains objects with key equals value.
+If you find a key which is not in indexes, no results will return.
 
 **compare**
 
@@ -171,6 +174,8 @@ let objs = await idb.select([
 ```
 
 NOTICE: the final logic is `A AND B AND C AND (D OR E OR F)`.
+
+`select` is not based on indexes, so it can be used with any property of objects.
 
 ### all()
 
