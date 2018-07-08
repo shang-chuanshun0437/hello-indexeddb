@@ -3,7 +3,7 @@ export default class HelloIndexedDB {
 		this.name = name
 		this.version = version
 
-		this.currentStore = use
+		this.currentObjectStore = use
 		this._runtimes = {}
 		
 		let request = indexedDB.open(name, version)
@@ -90,7 +90,7 @@ export default class HelloIndexedDB {
 	}
 	// ==========================================
 	get(key) {
-		let name = this.currentStore
+		let name = this.currentObjectStore
 		return new Promise((resolve, reject) => {
 			this.store(name).then((objectStore) => {
 				let request = objectStore.get(key)
@@ -106,7 +106,7 @@ export default class HelloIndexedDB {
 		})
 	}
 	query(key, value) {
-		let name = this.currentStore
+		let name = this.currentObjectStore
 		return new Promise((resolve, reject) => {
 			this.store(name).then((objectStore) => {
 				let index = objectStore.index(key)
@@ -133,7 +133,7 @@ export default class HelloIndexedDB {
 		})
 	}
 	all() {
-		let name = this.currentStore
+		let name = this.currentObjectStore
 		return new Promise((resolve, reject) => {
 			this.store(name).then((objectStore) => {
 				let request = objectStore.openCursor()
@@ -157,7 +157,7 @@ export default class HelloIndexedDB {
 		})
 	}
 	count() {
-		let name = this.currentStore
+		let name = this.currentObjectStore
 		return new Promise((resolve, reject) => {
 			this.store(name).then((objectStore) => {
 				let request = objectStore.count()
@@ -174,7 +174,7 @@ export default class HelloIndexedDB {
 	}
 	// =====================================
 	add(obj) {
-		let name = this.currentStore
+		let name = this.currentObjectStore
 		return new Promise((resolve, reject) => {
 			this.store(name, 'readwrite').then((objectStore) => {
 				let request = objectStore.add(obj)
@@ -192,7 +192,7 @@ export default class HelloIndexedDB {
 		})
 	}
 	put(obj) {
-		let name = this.currentStore
+		let name = this.currentObjectStore
 		return new Promise((resolve, reject) => {
 			this.store(name, 'readwrite').then((objectStore) => {
 				let request = objectStore.put(obj)
@@ -210,7 +210,7 @@ export default class HelloIndexedDB {
 		})
 	}
 	delete(key) {
-		let name = this.currentStore
+		let name = this.currentObjectStore
 		return new Promise((resolve, reject) => {
 			this.store(name, 'readwrite').then((objectStore) => {
 				let request = objectStore.delete(key)
