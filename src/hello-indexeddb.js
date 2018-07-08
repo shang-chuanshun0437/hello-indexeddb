@@ -1,24 +1,15 @@
 export default class HelloIndexedDB {
 	constructor(options) {
-		let { name, version, stores, use, key } = options
+		let { name = 'HelloIndexedDB', version = 1, stores, use = 'HelloIndexedDB', key } = options || {}
 
-		if (!name) {
-			name = 'HelloIndexedDB'
-		}
-		if (!version) {
-			version = 1
-		}
 		if (!stores) {
 			stores = [
 				{ 
-					name: 'HelloIndexedDB', 
+					name: use, 
 					primaryKey: key || 'id',
 					autoIncrement: !key,
 				},
 			]
-		}
-		if (!use) {
-			use = 'HelloIndexedDB'
 		}
 
 		this.name = name
@@ -79,21 +70,28 @@ export default class HelloIndexedDB {
 			}
 		})
 	}
-	transaction(name, mode = 'readonly') {
-		return this.connect().then((db) => {
-			return db.transaction([name], mode)
-		})
-	}
-	store(name, mode = 'readonly') {
-		if (mode === 'readwrite' && this._runtimes[name]) {
-			return this._runtimes[name].objectStore(name)
-		}
+	transaction(name, mode = 'readonly', callback) {
+		let keyName = name + '.' + mode
 
-		return this.transaction(name, mode).then((tx) => {
-			if (mode === 'readwrite') {
-				this._runtimes[name] = tx
+		if (this._runtimes[keyName]) {
+			let tx = this._runtimes[keyName]
+			callback(tx)
+			return
+		}
+		
+		this.connect().then((db) => {
+			let tx = db.transaction([name], mode)
+			this._runtimes[keyName] = tx
+			tx.oncomplete = () => {
+				this._runtimes[keyName] = null
 			}
-			return tx.objectStore(name)
+			tx.onerror = (e) => {
+				this._runtimes[keyName] = null
+			}
+			tx.onabort = (e) => {
+				this._runtimes[keyName] = null
+			}
+			callback(tx)
 		})
 	}
 	use(name) {
@@ -113,7 +111,8 @@ export default class HelloIndexedDB {
 	get(key) {
 		let name = this.currentObjectStore
 		return new Promise((resolve, reject) => {
-			this.store(name).then((objectStore) => {
+			this.transaction(name, 'readonly', (tx) => {
+				let objectStore = tx.objectStore(name)
 				let request = objectStore.get(key)
 				request.onsuccess = (e) => {
 					resolve(e.target.result)
@@ -121,15 +120,14 @@ export default class HelloIndexedDB {
 				request.onerror = (e) => {
 					reject(e)
 				}
-			}).catch((e) => {
-				reject(e)
 			})
 		})
 	}
 	find(key, value) {
 		let name = this.currentObjectStore
 		return new Promise((resolve, reject) => {
-			this.store(name).then((objectStore) => {
+			this.transaction(name, 'readonly', (tx) => {
+				let objectStore = tx.objectStore(name)
 				let index = objectStore.index(key)
 				let request = index.get(value)
 				request.onsuccess = (e) => {
@@ -138,15 +136,14 @@ export default class HelloIndexedDB {
 				request.onerror = (e) => {
 					reject(e)
 				}
-			}).catch((e) => {
-				reject(e)
 			})
 		})
 	}
 	query(key, value, compare) {
 		let name = this.currentObjectStore
 		return new Promise((resolve, reject) => {
-			this.store(name).then((objectStore) => {
+			this.transaction(name, 'readonly', (tx) => {
+				let objectStore = tx.objectStore(name)
 				let range = (function(){
 					switch (compare) {
 						case '>':
@@ -192,8 +189,6 @@ export default class HelloIndexedDB {
 				request.onerror = (e) => {
 					reject(e)
 				}
-			}).catch((e) => {
-				reject(e)
 			})
 		})
 	}
@@ -247,7 +242,8 @@ export default class HelloIndexedDB {
 			return false
 		}
 		return new Promise((resolve, reject) => {
-			this.store(name).then((objectStore) => {
+			this.transaction(name, 'readonly', (tx) => {
+				let objectStore = tx.objectStore(name)
 				let request = objectStore.openCursor()
 				let results = []
 				request.onsuccess = (e) => {
@@ -265,15 +261,14 @@ export default class HelloIndexedDB {
 				request.onerror = (e) => {
 					reject(e)
 				}
-			}).catch((e) => {
-				reject(e)
 			})
 		})
 	}
 	all() {
 		let name = this.currentObjectStore
 		return new Promise((resolve, reject) => {
-			this.store(name).then((objectStore) => {
+			this.transaction(name, 'readonly', (tx) => {
+				let objectStore = tx.objectStore(name)
 				let request = objectStore.openCursor()
 				let results = []
 				request.onsuccess = (e) => {
@@ -289,15 +284,14 @@ export default class HelloIndexedDB {
 				request.onerror = (e) => {
 					reject(e)
 				}
-			}).catch((e) => {
-				reject(e)
 			})
 		})
 	}
 	count() {
 		let name = this.currentObjectStore
 		return new Promise((resolve, reject) => {
-			this.store(name).then((objectStore) => {
+			this.transaction(name, 'readonly', (tx) => {
+				let objectStore = tx.objectStore(name)
 				let request = objectStore.count()
 				request.onsuccess = e => {
 					resolve(e.target.result)
@@ -305,8 +299,6 @@ export default class HelloIndexedDB {
 				request.onerror = e => {
 					reject(e)
 				}
-			}).catch((e) => {
-				reject(e)
 			})
 		})
 	}
@@ -314,54 +306,45 @@ export default class HelloIndexedDB {
 	add(obj) {
 		let name = this.currentObjectStore
 		return new Promise((resolve, reject) => {
-			this.store(name, 'readwrite').then((objectStore) => {
+			this.transaction(name, 'readwrite', (tx) => {
+				let objectStore = tx.objectStore(name)
 				let request = objectStore.add(obj)
 				request.onsuccess = (e) => {
-					this._runtimes[name] = null
 					resolve(e.target.result)
 				}
 				request.onerror = (e) => {
-					this._runtimes[name] = null
 					reject(e)
 				}
-			}).catch((e) => {
-				reject(e)
 			})
 		})
 	}
 	put(obj) {
 		let name = this.currentObjectStore
 		return new Promise((resolve, reject) => {
-			this.store(name, 'readwrite').then((objectStore) => {
+			this.transaction(name, 'readwrite', (tx) => {
+				let objectStore = tx.objectStore(name)
 				let request = objectStore.put(obj)
 				request.onsuccess = (e) => {
-					this._runtimes[name] = null
 					resolve(e.target.result)
 				}
 				request.onerror = (e) => {
-					this._runtimes[name] = null
 					reject(e)
 				}
-			}).catch((e) => {
-				reject(e)
 			})
 		})
 	}
 	delete(key) {
 		let name = this.currentObjectStore
 		return new Promise((resolve, reject) => {
-			this.store(name, 'readwrite').then((objectStore) => {
+			this.transaction(name, 'readwrite', (tx) => {
+				let objectStore = tx.objectStore(name)
 				let request = objectStore.delete(key)
 				request.onsuccess = (e) => {
-					this._runtimes[name] = null
 					resolve(e.target.result)
 				}
 				request.onerror = (e) => {
-					this._runtimes[name] = null
 					reject(e)
 				}
-			}).catch((e) => {
-				reject(e)
 			})
 		})
 	}

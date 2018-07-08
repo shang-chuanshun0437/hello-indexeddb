@@ -37,7 +37,7 @@
         console.log('[test:] add successfully.')
     }
     catch(e) {
-        console.error('[test:] add error.', e.srcElement.error.message)
+        console.error('[test:] add error.', e)
     }
 
     // test put
@@ -46,7 +46,7 @@
         console.log('[test:] put successfully.')
     }
     catch(e) {
-        console.error('[test:] put error.', e.srcElement.error.message)
+        console.error('[test:] put error.', e)
     }
 
     // test delete
@@ -55,7 +55,7 @@
         console.log('[test:] delete successfully.')
     }
     catch(e) {
-        console.error('[test:] delete error.', e.srcElement.error.message)
+        console.error('[test:] delete error.', e)
     }
 
     // test get
@@ -143,6 +143,12 @@
     await Promise.all(promises)
     let objs = await idb.query('age', 23)
     console.log('[test:] multiple put successfully.', objs)
+
+    // test async
+    setTimeout(async () => {
+        let obj = await idb.get('22')
+        console.log('[test:] async get successfully.', obj)
+    }, 500)
 
     // test 
     // let idbx = new HelloIndexedDB()
