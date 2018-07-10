@@ -366,4 +366,21 @@ export default class HelloIndexedDB {
 			})
 		})
 	}
+	clean() {
+		let name = this.currentObjectStore
+		return new Promise((resolve, reject) => {
+			this.transaction(name, 'readwrite').then((tx) => {
+				let objectStore = tx.objectStore(name)
+				let request = objectStore.clear()
+				request.onsuccess = (e) => {
+					resolve(e.target.result)
+				}
+				request.onerror = (e) => {
+					reject(e)
+				}
+			}).catch((e) => {
+				reject(e)
+			})
+		})
+	}
 }

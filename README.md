@@ -206,6 +206,10 @@ Delete a object by its primaryKey.
 await idb.delete('1000')
 ```
 
+### clean() 
+
+Delete all data. Remember to backup your data before you clean.
+
 ### use(objectStoreName)
 
 Switch to another store, return a new instance of HelloIndexedDB.
