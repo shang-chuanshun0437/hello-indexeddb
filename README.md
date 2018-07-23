@@ -60,8 +60,8 @@ let idb = new HelloIndexDB({
   use: 'store1',
 })
 
-(async function() {
-  await idb.put('key1', 'value2')
+;(async function() {
+  await idb.put({ id: 'key1', value: 'value2' })
   let obj = await idb.get('key1')
 })()
 ```
