@@ -71,26 +71,10 @@ export default class HelloIndexedDB {
 		})
 	}
 	transaction(name, mode = 'readonly') {
-		const request = () => {
-			return this.connect().then((db) => {
-				let tx = db.transaction(name, mode)
-				this._runtimes[name] = delay(tx)
-				tx.oncomplete = () => {
-					this._runtimes[name].expire()
-				}
-				tx.onerror = () => {
-					this._runtimes[name].expire()
-				}
-				tx.onabort = () => {
-					this._runtimes[name].expire()
-				}
-				return tx
-			})
-		}
-		const delay = (tx) => {
+		const wrap = (tx) => {
 			let expire
 			let state = 1
-			this._runtimes[name] = {
+			return {
 				mode,
 				tx,
 				defer: new Promise((resolve) => {
@@ -102,6 +86,22 @@ export default class HelloIndexedDB {
 				expire,
 				state,
 			}
+		}
+		const request = () => {
+			return this.connect().then((db) => {
+				let tx = db.transaction(name, mode)
+				this._runtimes[name] = wrap(tx)
+				tx.oncomplete = () => {
+					this._runtimes[name].expire()
+				}
+				tx.onerror = () => {
+					this._runtimes[name].expire()
+				}
+				tx.onabort = () => {
+					this._runtimes[name].expire()
+				}
+				return tx
+			})
 		}
 
 		// if a written transaction is running, wait until it finish
