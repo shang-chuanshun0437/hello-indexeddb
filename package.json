@@ -1,6 +1,6 @@
 {
   "name": "hello-indexeddb",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "A library to operate IndexedDB easily.",
   "main": "dist/hello-indexeddb.js",
   "scripts": {
@@ -17,8 +17,6 @@
   "license": "MIT",
   "devDependencies": {
     "babel-core": "^6.26.3",
-    "babel-plugin-transform-async-to-promises": "^0.7.0",
-    "babel-plugin-transform-es2015-classes": "^6.24.1",
     "babel-preset-env": "^1.7.0",
     "gulp": "^3.9.1",
     "gulp-babel": "^7.0.1",

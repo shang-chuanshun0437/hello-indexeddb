@@ -5,18 +5,8 @@ var babel = require('gulp-babel')
 var namespace = 'HelloIndexedDB'
 var entryfile = 'src/hello-indexeddb.js'
 
-var babelconfig = {
-  presets: [
-    ['env']
-  ],
-  plugins: [
-    'transform-async-to-promises',
-    'transform-es2015-classes'
-  ]
-}
-
 gulp.src(entryfile)
-  .pipe(babel(babelconfig))
+  .pipe(babel())
   .pipe(bufferify(function(content) {
 
     content = content.replace(/Object\.defineProperty\(exports,[\s\S]+?\);/gm, '')

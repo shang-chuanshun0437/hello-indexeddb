@@ -1,3 +1,5 @@
+import { stat } from "fs";
+
 export default class HelloIndexedDB {
 	constructor(options) {
 		let { name = 'HelloIndexedDB', version = 1, stores, use = 'HelloIndexedDB', key } = options || {}
@@ -71,28 +73,45 @@ export default class HelloIndexedDB {
 		})
 	}
 	transaction(name, mode = 'readonly') {
-		let keyName = name + '.' + mode
+		const request = () => {
+			return this.connect().then((db) => {
+				let tx = db.transaction(name, mode)
+				this._runtimes[name] = delay(tx)
+				tx.oncomplete = () => {
+					this._runtimes[name].expire()
+				}
+				tx.onerror = () => {
+					this._runtimes[name].expire()
+				}
+				tx.onabort = () => {
+					this._runtimes[name].expire()
+				}
+				return tx
+			})
+		}
+		const delay = (tx) => {
+			let expire
+			let state = 1
+			this._runtimes[name] = {
+				mode,
+				tx,
+				defer: new Promise((resolve) => {
+					expire = () => {
+						resolve()
+						state = 0
+					}
+				}),
+				expire,
+				state,
+			}
+		}
 
-		if (this._runtimes[keyName]) {
-			let tx = this._runtimes[keyName]
-			return Promise.resolve(tx)
+		// if a written transaction is running, wait until it finish
+		if (this._runtimes[name] && this._runtimes[name].state && this._runtimes[name].mode === 'readwrite') {
+			return this._runtimes[name].defer.then(request)
 		}
 		
-		return this.connect().then((db) => {
-			let tx = db.transaction([name], mode)
-			this._runtimes[keyName] = tx
-			tx.oncomplete = () => {
-				this._runtimes[keyName] = null
-			}
-			tx.onerror = () => {
-				this._runtimes[keyName] = null
-			}
-			tx.onabort = () => {
-				this._runtimes[keyName] = null
-
-			}
-			return tx
-		})
+		return request()
 	}
 	use(name) {
 		return new HelloIndexedDB({
@@ -111,7 +130,7 @@ export default class HelloIndexedDB {
 	get(key) {
 		let name = this.currentObjectStore
 		return new Promise((resolve, reject) => {
-			this.transaction(name, 'readonly').then((tx) => {
+			this.transaction(name).then((tx) => {
 				let objectStore = tx.objectStore(name)
 				let request = objectStore.get(key)
 				request.onsuccess = (e) => {
@@ -128,7 +147,7 @@ export default class HelloIndexedDB {
 	find(key, value) {
 		let name = this.currentObjectStore
 		return new Promise((resolve, reject) => {
-			this.transaction(name, 'readonly').then((tx) => {
+			this.transaction(name).then((tx) => {
 				let objectStore = tx.objectStore(name)
 				let index = objectStore.index(key)
 				let request = index.get(value)
@@ -146,7 +165,7 @@ export default class HelloIndexedDB {
 	query(key, value, compare) {
 		let name = this.currentObjectStore
 		return new Promise((resolve, reject) => {
-			this.transaction(name, 'readonly').then((tx) => {
+			this.transaction(name).then((tx) => {
 				let objectStore = tx.objectStore(name)
 				let range = (function(){
 					switch (compare) {
@@ -248,7 +267,7 @@ export default class HelloIndexedDB {
 			return false
 		}
 		return new Promise((resolve, reject) => {
-			this.transaction(name, 'readonly').then((tx) => {
+			this.transaction(name).then((tx) => {
 				let objectStore = tx.objectStore(name)
 				let request = objectStore.openCursor()
 				let results = []
@@ -275,7 +294,7 @@ export default class HelloIndexedDB {
 	all() {
 		let name = this.currentObjectStore
 		return new Promise((resolve, reject) => {
-			this.transaction(name, 'readonly').then((tx) => {
+			this.transaction(name).then((tx) => {
 				let objectStore = tx.objectStore(name)
 				let request = objectStore.openCursor()
 				let results = []
@@ -300,7 +319,7 @@ export default class HelloIndexedDB {
 	count() {
 		let name = this.currentObjectStore
 		return new Promise((resolve, reject) => {
-			this.transaction(name, 'readonly').then((tx) => {
+			this.transaction(name).then((tx) => {
 				let objectStore = tx.objectStore(name)
 				let request = objectStore.count()
 				request.onsuccess = e => {
