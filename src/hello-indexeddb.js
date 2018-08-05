@@ -1,5 +1,3 @@
-import { stat } from "fs";
-
 export default class HelloIndexedDB {
 	constructor(options) {
 		let { name = 'HelloIndexedDB', version = 1, stores, use = 'HelloIndexedDB', key } = options || {}
