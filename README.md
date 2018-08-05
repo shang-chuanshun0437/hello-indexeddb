@@ -60,8 +60,8 @@ let idb = new HelloIndexDB({
   use: 'store1',
 })
 
-(async function() {
-  await idb.put('key1', 'value2')
+;(async function() {
+  await idb.put({ id: 'key1', value: 'value2' })
   let obj = await idb.get('key1')
 })()
 ```
@@ -102,7 +102,7 @@ A store config:
 },
 ```
 
-### get(key)
+### async get(key)
 
 Get a object from indexedDB by its primaryKey.
 
@@ -110,7 +110,7 @@ Get a object from indexedDB by its primaryKey.
 let obj = await idb.get('key1')
 ```
 
-### find(key, value)
+### async find(key, value)
 
 Get the first object whose index name is `key` and value is `value`.
 Notice, `key` is a index name.
@@ -121,7 +121,7 @@ let obj = await idb.find('name', 'tomy')
 
 If you find a key which is not in indexes, no results will return.
 
-### query(key, value, compare)
+### async query(key, value, compare)
 
 Get objects by one name of its indexes key and certain value. i.e.
 
@@ -141,7 +141,7 @@ Choose from `>` `>=` `<` `<=` `!=` `=` `%`.
 `%` means 'LIKE', only used for string search.
 Notice `!=` will use `!==`, `=` will use `===`, so you should pass right typeof of value.
 
-### select([{ key, value, compare, optional }])
+### async select([{ key, value, compare, optional }])
 
 Select objects with multiple conditions. Pass conditions as an array, each condition item contains:
 
@@ -177,28 +177,28 @@ NOTICE: the final logic is `A AND B AND C AND (D OR E OR F)`.
 
 `select` is not based on indexes, so it can be used with any property of objects.
 
-### all()
+### async all()
 
 Get all records from your objectStore.
 
-### count()
+### async count()
 
 Get all records count.
 
-### add(item)
+### async add(item)
 
 Append a object into your database. 
 Notice, your item's properties should contain primaryKey.
 The item whose primaryKey exists in the objectStore, an error will be thrown.
 
-### put(item)
+### async put(item)
 
 Update a object in your database. 
 Notice, your item's properties should contain primaryKey. 
 If the object does not exist, it will be added into the database.
 So it is better to use `put` instead of `add` unless you know what you are doing.
 
-### delete(key)
+### async delete(key)
 
 Delete a object by its primaryKey.
 
@@ -206,21 +206,11 @@ Delete a object by its primaryKey.
 await idb.delete('1000')
 ```
 
-### clean() 
+### async clean() 
 
 Delete all data. Remember to backup your data before you clean.
 
-### use(objectStoreName)
-
-Switch to another store, return a new instance of HelloIndexedDB.
-
-```
-let idb2 = idb.use('store2')
-```
-
-The methods of idb2 is the same as idb, but use 'store2' as its current objectStore.
-
-### connect()
+### async connect()
 
 Connect to the database and get a indexeddb database instance.
 
@@ -236,7 +226,7 @@ let db = idb.connect()
 let objectStoreNames = db.objectStoreNames
 ```
 
-### close()
+### async close()
 
 Close current connect.
 
@@ -245,3 +235,13 @@ await idb.close()
 ```
 
 Remember to close database connect if you do not use it any more.
+
+### use(objectStoreName)
+
+Switch to another store, return a new instance of HelloIndexedDB.
+
+```
+let idb2 = idb.use('store2')
+```
+
+The methods of idb2 is the same as idb, but use 'store2' as its current objectStore.
