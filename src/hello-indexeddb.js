@@ -124,6 +124,33 @@ export default class HelloIndexedDB {
 			db.close()
 		})
 	}
+	each(fn) {
+		let name = this.currentObjectStore
+		return new Promise((resolve, reject) => {
+			this.transaction(name).then((tx) => {
+				let objectStore = tx.objectStore(name)
+				let request = objectStore.openCursor()
+				let i = 0
+				request.onsuccess = (e) => {
+					let cursor = e.target.result
+					if (cursor) {
+						fn(cursor.value, i ++, () => cursor.continue(), resolve)
+						if (fn.length < 3) {
+							cursor.continue()
+						}
+					}
+					else {
+						resolve()
+					}
+				}
+				request.onerror = (e) => {
+					reject(e)
+				}
+			}).catch((e) => {
+				reject(e)
+			})
+		})
+	}
 	// ==========================================
 	get(key) {
 		let name = this.currentObjectStore
@@ -264,55 +291,16 @@ export default class HelloIndexedDB {
 			}
 			return false
 		}
-		return new Promise((resolve, reject) => {
-			this.transaction(name).then((tx) => {
-				let objectStore = tx.objectStore(name)
-				let request = objectStore.openCursor()
-				let results = []
-				request.onsuccess = (e) => {
-					let cursor = e.target.result
-					if (cursor) {
-						if (determine(cursor.value)) {
-							results.push(cursor.value)
-						}
-						cursor.continue()
-					}
-					else {
-						resolve(results)
-					}
-				}
-				request.onerror = (e) => {
-					reject(e)
-				}
-			}).catch((e) => {
-				reject(e)
-			})
-		})
+		let results = []
+		return this.each((value) => {
+			if (determine(value)) {
+				results.push(value)
+			}
+		}).then(() => results)
 	}
 	all() {
-		let name = this.currentObjectStore
-		return new Promise((resolve, reject) => {
-			this.transaction(name).then((tx) => {
-				let objectStore = tx.objectStore(name)
-				let request = objectStore.openCursor()
-				let results = []
-				request.onsuccess = (e) => {
-					let cursor = e.target.result
-					if (cursor) {
-						results.push(cursor.value)
-						cursor.continue()
-					}
-					else {
-						resolve(results)
-					}
-				}
-				request.onerror = (e) => {
-					reject(e)
-				}
-			}).catch((e) => {
-				reject(e)
-			})
-		})
+		let results = []
+		return this.each(v => results.push(v)).then(() => results)
 	}
 	count() {
 		let name = this.currentObjectStore

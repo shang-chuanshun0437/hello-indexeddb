@@ -144,6 +144,16 @@
     let objs = await idb.query('age', 23)
     console.log('[test:] multiple put successfully.', objs)
 
+    // test each
+    await idb.each((v, i, next, stop) => {
+        console.log('[test:] each', i, v)
+        if (i === 4) {
+            stop()
+            return
+        }
+        next()
+    })
+
     // test async
     setTimeout(async () => {
         let obj = await idb.get('22')
