@@ -114,6 +114,15 @@
         console.error('[test:] all error.', e)
     }
 
+    // test keys
+    try {
+        let keys = await idb.keys()
+        console.log('[test:] keys successfully.', keys)
+    }
+    catch(e) {
+        console.error('[test:] keys error.', e)
+    }
+
     // test count
     try {
         let objs = await idb.count()
@@ -155,14 +164,18 @@
     })
 
     // test async
-    setTimeout(async () => {
-        let obj = await idb.get('22')
-        console.log('[test:] async get successfully.', obj)
-    }, 500)
+    await new Promise((resolve) => {
+        setTimeout(async () => {
+            let obj = await idb.get('22')
+            console.log('[test:] async get successfully.', obj)
+            resolve()
+        }, 500)
+    })
 
     // test 
     // let idbx = new HelloIndexedDB()
     // await idbx.put({ name: 'xxx' })
     
+
 })();
 </script>

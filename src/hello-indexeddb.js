@@ -70,6 +70,19 @@ export default class HelloIndexedDB {
 			}
 		})
 	}
+	use(name) {
+		return new HelloIndexedDB({
+			name: this.name,
+			version: this.version,
+			use: name,
+		})
+	}
+	close() {
+		this._runtimes = null
+		return this.connect().then((db) => {
+			db.close()
+		})
+	}
 	transaction(name, mode = 'readonly') {
 		const wrap = (tx) => {
 			let expire
@@ -111,28 +124,27 @@ export default class HelloIndexedDB {
 		
 		return request()
 	}
-	use(name) {
-		return new HelloIndexedDB({
-			name: this.name,
-			version: this.version,
-			use: name,
-		})
-	}
-	close() {
-		this._runtimes = null
-		return this.connect().then((db) => {
-			db.close()
+	request(prepare, success, error, mode = 'readonly') {
+		let name = this.currentObjectStore
+		return this.transaction(name, mode).then((tx) => {
+			let objectStore = tx.objectStore(name)
+			let request = prepare(objectStore)
+			request.onsuccess = (e) => {
+				success(e.target.result)
+			}
+			request.onerror = (e) => {
+				error(e)
+			}
+		}).catch((e) => {
+			error(e)
 		})
 	}
 	each(fn) {
-		let name = this.currentObjectStore
 		return new Promise((resolve, reject) => {
-			this.transaction(name).then((tx) => {
-				let objectStore = tx.objectStore(name)
-				let request = objectStore.openCursor()
-				let i = 0
-				request.onsuccess = (e) => {
-					let cursor = e.target.result
+			let i = 0
+			this.request(
+				objectStore => objectStore.openCursor(),
+				cursor => {
 					if (cursor) {
 						fn(cursor.value, i ++, () => cursor.continue(), resolve)
 						if (fn.length < 3) {
@@ -142,78 +154,71 @@ export default class HelloIndexedDB {
 					else {
 						resolve()
 					}
-				}
-				request.onerror = (e) => {
-					reject(e)
-				}
-			}).catch((e) => {
-				reject(e)
-			})
+				},
+				reject,
+			)
 		})
 	}
 	// ==========================================
 	get(key) {
-		let name = this.currentObjectStore
 		return new Promise((resolve, reject) => {
-			this.transaction(name).then((tx) => {
-				let objectStore = tx.objectStore(name)
-				let request = objectStore.get(key)
-				request.onsuccess = (e) => {
-					resolve(e.target.result)
-				}
-				request.onerror = (e) => {
-					reject(e)
-				}
-			}).catch((e) => {
-				reject(e)
-			})
+			this.request(objectStore => objectStore.get(key), resolve, reject)
 		})
 	}
-	find(key, value) {
-		let name = this.currentObjectStore
+	keys() {
 		return new Promise((resolve, reject) => {
-			this.transaction(name).then((tx) => {
-				let objectStore = tx.objectStore(name)
-				let index = objectStore.index(key)
-				let request = index.get(value)
-				request.onsuccess = (e) => {
-					resolve(e.target.result)
-				}
-				request.onerror = (e) => {
-					reject(e)
-				}
-			}).catch((e) => {
-				reject(e)
-			})
+			this.request(objectStore => objectStore.getAllKeys(), resolve, reject)
+		})
+	}
+	all() {
+		return new Promise((resolve, reject) => {
+			this.request(objectStore => objectStore.getAll(), resolve, reject)
+		})
+	}
+	count() {
+		return new Promise((resolve, reject) => {
+			this.request(objectStore => objectStore.count(), resolve, reject)
+		})
+	}
+	// ==========================================
+	find(key, value) {
+		return new Promise((resolve, reject) => {
+			this.request(
+				objectStore => {
+					let index = objectStore.index(key)
+					return index.get(value)
+				},
+				resolve, 
+				reject
+			)
 		})
 	}
 	query(key, value, compare) {
-		let name = this.currentObjectStore
 		return new Promise((resolve, reject) => {
-			this.transaction(name).then((tx) => {
-				let objectStore = tx.objectStore(name)
-				let range = (function(){
-					switch (compare) {
-						case '>':
-							return IDBKeyRange.lowerBound(value, true)
-						case '>=': 
-							return IDBKeyRange.lowerBound(value)
-						case '<':
-							return IDBKeyRange.upperBound(value, true)
-						case '<=':
-							return IDBKeyRange.upperBound(value)
-						case '%':
-						case '!=':
-							return undefined
-						default:
-							return IDBKeyRange.only(value)
-					}
-				}())
-				let index = objectStore.index(key)
-				let request = index.openCursor(range)
-				let results = []
-				request.onsuccess = (e) => {
-					let cursor = e.target.result
+			let range = (function() {
+				switch (compare) {
+					case '>':
+						return IDBKeyRange.lowerBound(value, true)
+					case '>=': 
+						return IDBKeyRange.lowerBound(value)
+					case '<':
+						return IDBKeyRange.upperBound(value, true)
+					case '<=':
+						return IDBKeyRange.upperBound(value)
+					case '%':
+					case '!=':
+						return undefined
+					default:
+						return IDBKeyRange.only(value)
+				}
+			}())
+			let results = []
+			this.request(
+				objectStore => {
+					let index = objectStore.index(key)
+					return index.openCursor(range)
+				},
+				cursor => {
 					if (cursor) {
 						if (compare === '!=') {
 							if (cursor.value[key] !== value) {
@@ -233,17 +238,12 @@ export default class HelloIndexedDB {
 					else {
 						resolve(results)
 					}
-				}
-				request.onerror = (e) => {
-					reject(e)
-				}
-			}).catch((e) => {
-				reject(e)
-			})
+				}, 
+				reject,
+			)
 		})
 	}
 	select(conditions) {
-		let name = this.currentObjectStore
 		let determine = function(obj) {
 			let or_conditions = []
 			let and_conditions = []
@@ -298,94 +298,25 @@ export default class HelloIndexedDB {
 			}
 		}).then(() => results)
 	}
-	all() {
-		let results = []
-		return this.each(v => results.push(v)).then(() => results)
-	}
-	count() {
-		let name = this.currentObjectStore
-		return new Promise((resolve, reject) => {
-			this.transaction(name).then((tx) => {
-				let objectStore = tx.objectStore(name)
-				let request = objectStore.count()
-				request.onsuccess = e => {
-					resolve(e.target.result)
-				}
-				request.onerror = e => {
-					reject(e)
-				}
-			}).catch((e) => {
-				reject(e)
-			})
-		})
-	}
 	// =====================================
 	add(obj) {
-		let name = this.currentObjectStore
 		return new Promise((resolve, reject) => {
-			this.transaction(name, 'readwrite').then((tx) => {
-				let objectStore = tx.objectStore(name)
-				let request = objectStore.add(obj)
-				request.onsuccess = (e) => {
-					resolve(e.target.result)
-				}
-				request.onerror = (e) => {
-					reject(e)
-				}
-			}).catch((e) => {
-				reject(e)
-			})
+			this.request(objectStore => objectStore.add(obj), resolve, reject, 'readwrite')
 		})
 	}
 	put(obj) {
-		let name = this.currentObjectStore
 		return new Promise((resolve, reject) => {
-			this.transaction(name, 'readwrite').then((tx) => {
-				let objectStore = tx.objectStore(name)
-				let request = objectStore.put(obj)
-				request.onsuccess = (e) => {
-					resolve(e.target.result)
-				}
-				request.onerror = (e) => {
-					reject(e)
-				}
-			}).catch((e) => {
-				reject(e)
-			})
+			this.request(objectStore => objectStore.put(obj), resolve, reject, 'readwrite')
 		})
 	}
 	delete(key) {
-		let name = this.currentObjectStore
 		return new Promise((resolve, reject) => {
-			this.transaction(name, 'readwrite').then((tx) => {
-				let objectStore = tx.objectStore(name)
-				let request = objectStore.delete(key)
-				request.onsuccess = (e) => {
-					resolve(e.target.result)
-				}
-				request.onerror = (e) => {
-					reject(e)
-				}
-			}).catch((e) => {
-				reject(e)
-			})
+			this.request(objectStore => objectStore.delete(key), resolve, reject, 'readwrite')
 		})
 	}
-	clean() {
-		let name = this.currentObjectStore
+	clear() {
 		return new Promise((resolve, reject) => {
-			this.transaction(name, 'readwrite').then((tx) => {
-				let objectStore = tx.objectStore(name)
-				let request = objectStore.clear()
-				request.onsuccess = (e) => {
-					resolve(e.target.result)
-				}
-				request.onerror = (e) => {
-					reject(e)
-				}
-			}).catch((e) => {
-				reject(e)
-			})
+			this.request(objectStore => objectStore.clear(), resolve, reject, 'readwrite')
 		})
 	}
 }

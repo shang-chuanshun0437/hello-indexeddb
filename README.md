@@ -110,7 +110,7 @@ Get a object from indexedDB by its primaryKey.
 let obj = await idb.get('key1')
 ```
 
-### async find(key, value)
+### find(key, value)
 
 Get the first object whose index name is `key` and value is `value`.
 Notice, `key` is a index name.
@@ -181,9 +181,38 @@ NOTICE: the final logic is `A AND B AND C AND (D OR E OR F)`.
 
 Get all records from your objectStore.
 
+### keys()
+
+Get all primary keys from your objectStore.
+
 ### count()
 
 Get all records count.
+
+### add(item)
+
+Append a object into your database. 
+Notice, your item's properties should contain primaryKey.
+The item whose primaryKey exists in the objectStore, an error will be thrown.
+
+### put(item)
+
+Update a object in your database. 
+Notice, your item's properties should contain primaryKey. 
+If the object does not exist, it will be added into the database.
+So it is better to use `put` instead of `add` unless you know what you are doing.
+
+### delete(key)
+
+Delete a object by its primaryKey.
+
+```js
+await idb.delete('1000')
+```
+
+### clear() 
+
+Delete all data. Remember to backup your data before you clean.
 
 ### each(fn)
 
@@ -216,32 +245,21 @@ await idb.each((value, index) => {
 It will iterate all objects in your current store.
 And `fn` should NOT be an async function.
 
-### async add(item)
+### request(prepare, success, error)
 
-Append a object into your database. 
-Notice, your item's properties should contain primaryKey.
-The item whose primaryKey exists in the objectStore, an error will be thrown.
-
-### async put(item)
-
-Update a object in your database. 
-Notice, your item's properties should contain primaryKey. 
-If the object does not exist, it will be added into the database.
-So it is better to use `put` instead of `add` unless you know what you are doing.
-
-### async delete(key)
-
-Delete a object by its primaryKey.
+Make a request to current objectStore:
 
 ```js
-await idb.delete('1000')
+idb.request(
+  objectStore => objectStore.get('myKey'),
+  value => console.log(value),
+  error => console.error(error),
+)
 ```
 
-### async clean() 
+It is useful when you can't get results by previous given methods.
 
-Delete all data. Remember to backup your data before you clean.
-
-### async connect()
+### connect()
 
 Connect to the database and get a indexeddb database instance.
 
@@ -257,7 +275,7 @@ let db = idb.connect()
 let objectStoreNames = db.objectStoreNames
 ```
 
-### async close()
+### close()
 
 Close current connect.
 
