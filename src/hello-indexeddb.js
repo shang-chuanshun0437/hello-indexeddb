@@ -142,14 +142,14 @@ export default class HelloIndexedDB {
 			error(e)
 		})
 	}
-	each(fn) {
+	each(fn, direction = 'next') {
 		return new Promise((resolve, reject) => {
 			let i = 0
 			this.request(
-				objectStore => objectStore.openCursor(),
+				objectStore => objectStore.openCursor(objectStore.keyPath, direction),
 				cursor => {
 					if (cursor) {
-						fn(cursor.value, i ++, () => cursor.continue(), resolve)
+						fn(cursor.value, i ++, cursor, resolve, reject)
 						if (fn.length < 3) {
 							cursor.continue()
 						}
