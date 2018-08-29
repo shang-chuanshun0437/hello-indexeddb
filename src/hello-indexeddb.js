@@ -123,6 +123,10 @@ export default class HelloIndexedDB {
 		
 		return request()
 	}
+	objectStore() {
+		let name = this.currentObjectStore
+		return this.transaction(name).then(tx => tx.objectStore(name))
+	}
 	request(prepare, success, error, mode = 'readonly') {
 		let name = this.currentObjectStore
 		return this.transaction(name, mode).then((tx) => {
