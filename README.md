@@ -102,7 +102,7 @@ A store config:
 },
 ```
 
-### get(key)
+### get(id)
 
 Get a object from indexedDB by its primaryKey.
 
@@ -181,6 +181,10 @@ NOTICE: the final logic is `A AND B AND C AND (D OR E OR F)`.
 
 Get all records from your objectStore.
 
+### some(count)
+
+Get some records from your objectStore by count.
+
 ### keys()
 
 Get all primary keys from your objectStore.
@@ -189,20 +193,37 @@ Get all primary keys from your objectStore.
 
 Get all records count.
 
-### add(item)
+### add(obj)
 
 Append a object into your database. 
-Notice, your item's properties should contain primaryKey.
-The item whose primaryKey exists in the objectStore, an error will be thrown.
+Notice, obj's properties should contain primaryKey.
+If obj's primaryKey exists in the objectStore, an error will be thrown.
 
-### put(item)
+### put(obj)
 
 Update a object in your database. 
 Notice, your item's properties should contain primaryKey. 
 If the object does not exist, it will be added into the database.
 So it is better to use `put` instead of `add` unless you know what you are doing.
 
-### delete(key)
+### set(id, obj)
+
+- id: primaryKey value
+- obj
+
+key will be merged into obj, i.e.
+
+```js
+let obj = {
+  id: '1',
+  name: 'tomy',
+}
+await idb.set('2', obj) // { id: '2', name: 'tomy' }
+```
+
+It is useful to copy record.
+
+### delete(id)
 
 Delete a object by its primaryKey.
 
@@ -235,7 +256,11 @@ await idb.each((value, index, cursor, resolve, reject) => {
 - resolve: a function to stop the iterator with resolved
 - reject: a function to stop the iterator with rejected
 
-### request(prepare, success, error)
+### reverse(fn)
+
+Very like `each` method, but iterate from end to begin.
+
+### request(prepare, success, error, mode)
 
 Make a request to current objectStore:
 
@@ -247,21 +272,30 @@ idb.request(
 )
 ```
 
+- prepare: a function which receive objectStore and should return a rquest
+- success: a function which will be invoked when the prepared request success
+- error: a function which will be invoked when any error happen
+- mode: 'readonly' or 'readwrite'
+
 It is useful when you can't get results by previous given methods.
+
+### objectStore()
+
+Get current objectStore with 'readonly' mode.
 
 ### connect()
 
-Connect to the database and get a indexeddb database instance.
+Create a connection to current database, and get current database.
 
 ```js
-let db = idb.connect()
+let db = await idb.connect()
 ```
 
 `db` is a instance of IDBDatabase, so you can use it for many use.
 Read offical document [here](https://developer.mozilla.org/en-US/docs/Web/API/IDBDatabase).
 
 ```js
-let db = idb.connect()
+let db = await idb.connect()
 let objectStoreNames = db.objectStoreNames
 ```
 
@@ -282,5 +316,7 @@ Switch to another store, return a new instance of HelloIndexedDB.
 ```js
 let idb2 = idb.use('store2')
 ```
+
+`use` method is the only method which is not an async function.
 
 The methods of idb2 is the same as idb, but use 'store2' as its current objectStore.

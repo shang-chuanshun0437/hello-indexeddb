@@ -142,16 +142,12 @@ export default class HelloIndexedDB {
 			error(e)
 		})
 	}
-	each(...args) {
-		let [direction, fn] = args
-		if (args.length === 1) {
-			fn = direction
-			direction = 'next'
-		}
+	each(fn, reverse = false) {
 		return new Promise((resolve, reject) => {
 			let i = 0
+			let direction = reverse ? 'prev' : 'next'
 			this.request(
-				objectStore => objectStore.openCursor(objectStore.keyPath, direction),
+				objectStore => objectStore.openCursor(null, direction),
 				cursor => {
 					if (cursor) {
 						fn(cursor.value, i ++, cursor, resolve, reject)
@@ -167,6 +163,9 @@ export default class HelloIndexedDB {
 			)
 		})
 	}
+	reverse(fn) {
+		return this.each(fn, true)
+	}
 	// ==========================================
 	get(key) {
 		return new Promise((resolve, reject) => {
@@ -181,6 +180,11 @@ export default class HelloIndexedDB {
 	all() {
 		return new Promise((resolve, reject) => {
 			this.request(objectStore => objectStore.getAll(), resolve, reject)
+		})
+	}
+	some(count = 10) {
+		return new Promise((resolve, reject) => {
+			this.request(objectStore => objectStore.getAll(null, count), resolve, reject)
 		})
 	}
 	count() {
@@ -315,6 +319,20 @@ export default class HelloIndexedDB {
 	put(obj) {
 		return new Promise((resolve, reject) => {
 			this.request(objectStore => objectStore.put(obj), resolve, reject, 'readwrite')
+		})
+	}
+	set(key, obj) {
+		return new Promise((resolve, reject) => {
+			this.request(
+				objectStore => {
+					let keyPath = objectStore.keyPath
+					let data = Object.assign({}, obj, { [keyPath]: key })
+					return objectStore.put(data)
+				},
+				resolve,
+				reject,
+				'readwrite'
+			)
 		})
 	}
 	delete(key) {
