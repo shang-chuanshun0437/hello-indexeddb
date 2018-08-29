@@ -85,20 +85,19 @@ export default class HelloIndexedDB {
 	}
 	transaction(name, mode = 'readonly') {
 		const wrap = (tx) => {
-			let expire
-			let state = 1
-			return {
+			let runtime = {
 				mode,
 				tx,
-				defer: new Promise((resolve) => {
-					expire = () => {
-						resolve()
-						state = 0
-					}
-				}),
-				expire,
-				state,
+				expire: () => {},
+				state: 1,
 			}
+			runtime.defer = new Promise((resolve) => {
+				runtime.expire = () => {
+					resolve()
+					runtime.state = 0
+				}
+			})
+			return runtime
 		}
 		const request = () => {
 			return this.connect().then((db) => {
