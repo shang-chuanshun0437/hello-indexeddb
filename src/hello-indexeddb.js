@@ -142,7 +142,12 @@ export default class HelloIndexedDB {
 			error(e)
 		})
 	}
-	each(fn, direction = 'next') {
+	each(...args) {
+		let [direction, fn] = args
+		if (args.length === 1) {
+			fn = direction
+			direction = 'next'
+		}
 		return new Promise((resolve, reject) => {
 			let i = 0
 			this.request(
