@@ -154,13 +154,13 @@
     console.log('[test:] multiple put successfully.', objs)
 
     // test each
-    await idb.each((v, i, next, stop) => {
+    await idb.each((v, i, cursor, resolve) => {
         console.log('[test:] each', i, v)
         if (i === 4) {
-            stop()
+            resolve()
             return
         }
-        next()
+        cursor.continue()
     })
 
     // test async

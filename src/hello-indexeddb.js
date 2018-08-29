@@ -142,10 +142,9 @@ export default class HelloIndexedDB {
 			error(e)
 		})
 	}
-	each(fn, reverse = false) {
+	each(fn, direction) {
 		return new Promise((resolve, reject) => {
 			let i = 0
-			let direction = reverse ? 'prev' : 'next'
 			this.request(
 				objectStore => objectStore.openCursor(null, direction),
 				cursor => {
@@ -164,7 +163,7 @@ export default class HelloIndexedDB {
 		})
 	}
 	reverse(fn) {
-		return this.each(fn, true)
+		return this.each(fn, 'prev')
 	}
 	// ==========================================
 	get(key) {
