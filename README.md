@@ -219,31 +219,21 @@ Delete all data. Remember to backup your data before you clean.
 Iterate with cursor:
 
 ```js
-await idb.each((value, index, next, stop) => {
+await idb.each((value, index, cursor, resolve, reject) => {
   if (index >= 10) {
-    stop()
+    resolve()
   }
   else {
-    next()
+    cursor.continue()
   }
 })
 ```
 
 - value: the object at the position of cursor
 - index
-- next: a function which should be call to jump to next position
-- stop: a function which is used to stop iterating
-
-You can dispass `next` and `stop`:
-
-```js
-await idb.each((value, index) => {
-  // ...
-})
-```
-
-It will iterate all objects in your current store.
-And `fn` should NOT be an async function.
+- cursor: the indexedDB cursor in this action, if you pass this prarameter, you should MUST invoke cursor.continue() by yourself
+- resolve: a function to stop the iterator with resolved
+- reject: a function to stop the iterator with rejected
 
 ### request(prepare, success, error)
 
