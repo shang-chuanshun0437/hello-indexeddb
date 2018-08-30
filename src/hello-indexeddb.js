@@ -181,6 +181,26 @@ export default class HelloIndexedDB {
 			this.request(objectStore => objectStore.getAll(), resolve, reject)
 		})
 	}
+	first() {
+		return new Promise((resolve, reject) => {
+			let first
+			this.each((item, i, cursor, resolve) => {
+				first = item
+				resolve()
+			}).catch(reject)
+			resolve(first)
+		})
+	}
+	last() {
+		return new Promise((resolve, reject) => {
+			let last
+			this.reverse((item, i, cursor, resolve) => {
+				last = item
+				resolve()
+			}).catch(reject)
+			resolve(last)
+		})
+	}
 	some(count = 10) {
 		return new Promise((resolve, reject) => {
 			this.request(objectStore => objectStore.getAll(null, count), resolve, reject)
