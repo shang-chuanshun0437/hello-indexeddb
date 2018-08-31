@@ -181,9 +181,12 @@ NOTICE: the final logic is `A AND B AND C AND (D OR E OR F)`.
 
 Get all records from your objectStore.
 
-### some(count)
+### some(count, offset)
 
 Get some records from your objectStore by count.
+
+- count: the count to be return
+- offset: from which index to find
 
 ### keys()
 
@@ -282,6 +285,10 @@ It is useful when you can't get results by previous given methods.
 ### objectStore()
 
 Get current objectStore with 'readonly' mode.
+
+### primaryKey()
+
+Get primaryKey.
 
 ### connect()
 

@@ -123,9 +123,13 @@ export default class HelloIndexedDB {
 		
 		return request()
 	}
+	// =======================================
 	objectStore() {
 		let name = this.currentObjectStore
 		return this.transaction(name).then(tx => tx.objectStore(name))
+	}
+	primaryKey() {
+		return this.objectStore().keyPath
 	}
 	request(prepare, success, error, mode = 'readonly') {
 		let name = this.currentObjectStore
@@ -201,8 +205,23 @@ export default class HelloIndexedDB {
 			resolve(last)
 		})
 	}
-	some(count = 10) {
+	some(count = 10, offset = 0) {
 		return new Promise((resolve, reject) => {
+			if (offset > 0) {
+				let results = []
+				this.each((item, index, cursor, finish) => {
+					if (index >= offset) {
+						results.push(item)
+					}
+					if (index >= offset + count) {
+						finish()
+						return
+					}
+					cursor.continue()
+				}).catch(reject)
+				resolve(results)
+				return
+			}
 			this.request(objectStore => objectStore.getAll(null, count), resolve, reject)
 		})
 	}
