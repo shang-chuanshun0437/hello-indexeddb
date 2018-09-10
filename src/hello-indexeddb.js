@@ -18,7 +18,7 @@ export default class HelloIndexedDB {
 		this.currentObjectStore = use
 		this._runtimes = {}
 		
-		let request = indexedDB.open(name, version)
+		let request = self.indexedDB.open(name, version)
 		request.onupgradeneeded = e => {
 			let db = e.target.result
 			let existStoreNames = Array.from(db.objectStoreNames)
@@ -61,7 +61,7 @@ export default class HelloIndexedDB {
 	}
 	connect() {
 		return new Promise((resolve, reject) => {
-			let request = indexedDB.open(this.name, this.version)
+			let request = self.indexedDB.open(this.name, this.version)
 			request.onerror = (e) => {
 				reject(e)
 			}
@@ -187,22 +187,18 @@ export default class HelloIndexedDB {
 	}
 	first() {
 		return new Promise((resolve, reject) => {
-			let first
-			this.each((item, i, cursor, resolve) => {
-				first = item
-				resolve()
+			this.each((item, i, cursor, finish) => {
+				finish()
+				resolve(item)
 			}).catch(reject)
-			resolve(first)
 		})
 	}
 	last() {
 		return new Promise((resolve, reject) => {
-			let last
-			this.reverse((item, i, cursor, resolve) => {
-				last = item
-				resolve()
+			this.reverse((item, i, cursor, finish) => {
+				finish()
+				resolve(item)
 			}).catch(reject)
-			resolve(last)
 		})
 	}
 	some(count = 10, offset = 0) {
@@ -215,11 +211,11 @@ export default class HelloIndexedDB {
 					}
 					if (index >= offset + count) {
 						finish()
+						resolve(results)
 						return
 					}
 					cursor.continue()
-				}).catch(reject)
-				resolve(results)
+				}).then(() => resolve(results)).catch(reject)
 				return
 			}
 			this.request(objectStore => objectStore.getAll(null, count), resolve, reject)

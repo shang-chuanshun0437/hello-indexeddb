@@ -238,6 +238,8 @@ await idb.delete('1000')
 
 Delete all data. Remember to backup your data before you clean.
 
+## Special Methods
+
 ### each(fn)
 
 Iterate with cursor:
