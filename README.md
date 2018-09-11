@@ -30,10 +30,13 @@ const HelloIndexedDB = require('hello-indexeddb')
 
 AMD & CMD:
 
-```js
+```html
+<script src="dist/hello-indexeddb.js"></script>
+<script>
 define(['hello-indexeddb'], function(HelloIndexedDB) {
   // ...
 })
+</script>
 ```
 
 Normal Browsers:
@@ -41,11 +44,12 @@ Normal Browsers:
 ```html
 <script src="dist/hello-indexeddb.js"></script>
 <script>
-let idb = new HelloIndexedDB(options)
+const HelloIndexedDB = window['hello-indexeddb']
+const idb = new HelloIndexedDB(options)
 </scirpt>
 ```
 
-To use:
+How to use:
 
 ```js
 let idb = new HelloIndexDB({
@@ -76,30 +80,41 @@ Use `new` to creat or update a database.
 
 **options**
 
-When you new the class, you should pass options:
-
 - name: required, the name of a indexedDB database. You can see it in your browser dev-tools.
 - version: required, the version of this indexedDB instance.
 - stores: optional, an array to define objectStores. At least one store config should be passed.
-- use: required, which store to use
+- use: optional, which objectStore to use
 
-A store config:
+Example:
 
 ```js
-{
+// an example of index config
+const index1 = {
+  name: 'id', // required
+  key: 'id', // optional
+  unique: true, // optional
+}
+// an example of store config
+const store1 = {
   name: 'store1', // required, objectStore name
   primaryKey: 'id', // required, objectStore keyPath
   indexes: [ // optional
-    {
-      name: 'id', // required
-      key: 'id', // optional
-      unique: true, // optional
-    },
-    {
-      ...
-    },
+    index1,
+    index2,
+    index3,
   ],
-},
+}
+// an example of options
+const options = {
+  name: 'my_indexeddb',
+  version: 1,
+  stores: [
+    store1, 
+    store2,
+  ],
+  use: 'store1',
+}
+const idb = new HelloIndexedDB(options)
 ```
 
 ### get(id)
@@ -108,6 +123,7 @@ Get a object from indexedDB by its primaryKey.
 
 ```js
 let obj = await idb.get('key1')
+// { id: 'key1', value: 'value1' }
 ```
 
 ### find(key, value)
@@ -117,6 +133,7 @@ Notice, `key` is a index name.
 
 ```js
 let obj = await idb.find('name', 'tomy')
+// { id: '1001', name: 'tomy', age: 10 }
 ```
 
 If you find a key which is not in indexes, no results will return.
@@ -127,13 +144,14 @@ Get objects by one name of its indexes key and certain value. i.e.
 
 ```js
 let objs = await idb.query('name', 'GoFei')
+// [{ id: '1002', name: 'GoFei', age: 10 }]
+// if there are some other records with name equals GoFei, they will be put in the array
 ```
 
-In which, `name` is an index name in your `options.indexes`, not the key, remember this. 
-So you'd better to pass the name and the key same value when you creat database.
+In which, `name` is an index name in your `options.indexes`, not index key, remember this. So you'd better to pass the name and the key same value when you creat database.
 
 Return an array, which contains objects with key equals value.
-If you find a key which is not in indexes, no results will return.
+If you give a index name which is not in indexes options, no results will return.
 
 **compare**
 
@@ -146,7 +164,7 @@ Notice `!=` will use `!==`, `=` will use `===`, so you should pass right typeof 
 Select objects with multiple conditions. Pass conditions as an array, each condition item contains:
 
 - key: an index name
-- value: the value of index
+- value: the value to be found
 - compare: `>` `>=` `<` `<=` `!=` `=` `%`
 - optional: wether to make this condition to be an optional, default 'false' which means 'AND' in SQL.
 
@@ -176,6 +194,7 @@ let objs = await idb.select([
 NOTICE: the final logic is `A AND B AND C AND (D OR E OR F)`.
 
 `select` is not based on indexes, so it can be used with any property of objects.
+However, it face performance problem. So don't use it as possible.
 
 ### all()
 
@@ -186,7 +205,12 @@ Get all records from your objectStore.
 Get some records from your objectStore by count.
 
 - count: the count to be return
-- offset: from which index to find
+- offset: from which index to find, default 0
+
+```js
+let objs = await idb.some(3) // get the first 3 records from db
+let objs = await idb.some(3, 5) // get 6th-8th records from db
+```
 
 ### keys()
 
@@ -201,6 +225,7 @@ Get all records count.
 Append a object into your database. 
 Notice, obj's properties should contain primaryKey.
 If obj's primaryKey exists in the objectStore, an error will be thrown.
+So use `put` instead as possible.
 
 ### put(obj)
 
@@ -265,47 +290,21 @@ await idb.each((value, index, cursor, resolve, reject) => {
 
 Very like `each` method, but iterate from end to begin.
 
-### request(prepare, success, error, mode)
-
-Make a request to current objectStore:
-
-```js
-idb.request(
-  objectStore => objectStore.get('myKey'),
-  value => console.log(value),
-  error => console.error(error),
-)
-```
-
-- prepare: a function which receive objectStore and should return a rquest
-- success: a function which will be invoked when the prepared request success
-- error: a function which will be invoked when any error happen
-- mode: 'readonly' or 'readwrite'
-
-It is useful when you can't get results by previous given methods.
-
 ### objectStore()
 
 Get current objectStore with 'readonly' mode.
+
+```js
+let objectStore = await idb.objectStore()
+let name = objectStore.name
+```
 
 ### primaryKey()
 
 Get primaryKey.
 
-### connect()
-
-Create a connection to current database, and get current database.
-
 ```js
-let db = await idb.connect()
-```
-
-`db` is a instance of IDBDatabase, so you can use it for many use.
-Read offical document [here](https://developer.mozilla.org/en-US/docs/Web/API/IDBDatabase).
-
-```js
-let db = await idb.connect()
-let objectStoreNames = db.objectStoreNames
+let primaryKey = await idb.primaryKey()
 ```
 
 ### close()
@@ -320,6 +319,8 @@ Remember to close database connect if you do not use it any more.
 
 ### use(objectStoreName)
 
+_not async function_
+
 Switch to another store, return a new instance of HelloIndexedDB.
 
 ```js
@@ -329,3 +330,16 @@ let idb2 = idb.use('store2')
 `use` method is the only method which is not an async function.
 
 The methods of idb2 is the same as idb, but use 'store2' as its current objectStore.
+
+## test
+
+To test whether it works, after you clone this repo, run:
+
+```
+npm install
+npm test
+```
+
+Then you can see an opened page and find it works.
+The test cases are in [examples/index.html](.examples/index.html).
+Notice: you should not open the file directly, or the last test case will fail.

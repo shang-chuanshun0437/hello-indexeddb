@@ -152,6 +152,53 @@ it('use', async () => {
     let objs = await idb2.all()
     expect(objs).to.deep.equal([{ id: '1', name: 'doge' }])
 })
+
+it('in webworker', async () => {
+    let href = window.location.href
+    let path = href.split('/')
+    path.pop()
+    path.pop()
+    let dir = path.join('/')
+    let preparation = `
+        importScripts('${dir}/dist/hello-indexeddb.js')
+        const HelloIndexedDB = window['hello-indexeddb']
+        const idb = new HelloIndexedDB({
+            name: 'mydb',
+            version: 2,
+            stores: [
+                {
+                    name: 'departs',
+                    primaryKey: 'id',
+                },
+                {
+                    name: 'students',
+                    primaryKey: 'id',
+                    indexes: [
+                        {
+                            name: 'id',
+                            key: 'id',
+                            unique: true,
+                        },
+                        {
+                            name: 'name',
+                        },
+                        {
+                            name: 'age',
+                        },
+                    ],
+                },
+            ],
+            use: 'students',
+        })
+    `
+    let fn = `async function() {
+        let obj = await idb.get('5')
+        $notify(obj)
+    }`
+    let worker = new HelloWebWorker(preparation, fn)
+    let res = await worker.invoke()
+    expect(res.name).to.equal('othe')
+})
 // ----------------------------------------------------
 
 mocha.run()
