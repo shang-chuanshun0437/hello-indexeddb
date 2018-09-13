@@ -177,7 +177,7 @@ export default class HelloIndexedDB {
 				if (typeof data === 'object') {
 					let keys = Object.keys(data)
 					keys.sort()
-					if (JSON.stringify(keys) === '["key","type","value"]' && data.type === '$key->$value') {
+					if (JSON.stringify(keys) === '["__type__","key","value"]' && data.__type__ === '$key->$value') {
 						resolve(data.value)
 						return
 					}
@@ -370,7 +370,7 @@ export default class HelloIndexedDB {
 	set(key, value) {
 		return new Promise((resolve, reject) => {
 			this.request(
-				objectStore => objectStore.put({ key, value, type: '$key->$value' }),
+				objectStore => objectStore.put({ key, value, __type__: '$key->$value' }),
 				resolve,
 				reject,
 				'readwrite'
