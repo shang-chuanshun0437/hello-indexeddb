@@ -316,6 +316,14 @@ Get keyPath.
 let keyPath = await idb.keyPath()
 ```
 
+### db()
+
+Get current database.
+
+```js
+let db = await idb.db()
+```
+
 ### close()
 
 Close current connect.

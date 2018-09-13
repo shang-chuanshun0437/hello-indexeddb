@@ -59,7 +59,7 @@ export default class HelloIndexedDB {
 			}
 		}
 	}
-	connect() {
+	db() {
 		return new Promise((resolve, reject) => {
 			let request = self.indexedDB.open(this.name, this.version)
 			request.onerror = (e) => {
@@ -79,11 +79,12 @@ export default class HelloIndexedDB {
 	}
 	close() {
 		this._runtimes = null
-		return this.connect().then((db) => {
+		return this.db().then((db) => {
 			db.close()
 		})
 	}
-	transaction(name, mode = 'readonly') {
+	transaction(mode = 'readonly') {
+		let name = this.currentObjectStore
 		const wrap = (tx) => {
 			let runtime = {
 				mode,
@@ -100,7 +101,7 @@ export default class HelloIndexedDB {
 			return runtime
 		}
 		const request = () => {
-			return this.connect().then((db) => {
+			return this.db().then((db) => {
 				let tx = db.transaction(name, mode)
 				this._runtimes[name] = wrap(tx)
 				tx.oncomplete = () => {
@@ -125,25 +126,24 @@ export default class HelloIndexedDB {
 	}
 	// =======================================
 	objectStore() {
-		let name = this.currentObjectStore
-		return this.transaction(name).then(tx => tx.objectStore(name))
+		return this.transaction().then(tx => tx.objectStore(name))
 	}
 	keyPath() {
 		return this.objectStore().keyPath
 	}
 	request(prepare, success, error, mode = 'readonly') {
 		let name = this.currentObjectStore
-		return this.transaction(name, mode).then((tx) => {
+		return this.transaction(mode).then((tx) => {
 			let objectStore = tx.objectStore(name)
 			let request = prepare(objectStore)
 			request.onsuccess = (e) => {
 				success(e.target.result)
 			}
 			request.onerror = (e) => {
-				error(e)
+				typeof error === 'function' && error(e)
 			}
 		}).catch((e) => {
-			error(e)
+			typeof error === 'function' && error(e)
 		})
 	}
 	each(fn, direction) {
