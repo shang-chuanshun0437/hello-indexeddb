@@ -11,21 +11,24 @@
 <script>
 const HelloIndexedDB = window['hello-indexeddb']
 const HelloWebWorker = window['hello-webworker']
+const DB_NAME = 'my-test-idb'
+const DB_VERSION = 1
 const idb = new HelloIndexedDB({
-    name: 'mydb',
-    version: 2,
+    name: DB_NAME,
+    version: DB_VERSION,
     stores: [
         {
             name: 'departs',
-            primaryKey: 'id',
+            keyPath: 'id',
+            autoIncrement: true,
         },
         {
             name: 'students',
-            primaryKey: 'id',
+            keyPath: 'id',
             indexes: [
                 {
                     name: 'id',
-                    key: 'id',
+                    keyPath: 'id',
                     unique: true,
                 },
                 {
@@ -35,6 +38,10 @@ const idb = new HelloIndexedDB({
                     name: 'age',
                 },
             ],
+        },
+        {
+            name: 'tests',
+            isKeyValue: true,
         },
     ],
     use: 'students',
@@ -153,6 +160,13 @@ it('use', async () => {
     expect(objs).to.deep.equal([{ id: '1', name: 'doge' }])
 })
 
+it('set', async () => {
+    let idb3 = idb.use('tests')
+    await idb3.set('2', 'jiago')
+    let name = await idb3.get('2')
+    expect(name).to.equal('jiago')
+})
+
 it('in webworker', async () => {
     let href = window.location.href
     let path = href.split('/')
@@ -163,20 +177,16 @@ it('in webworker', async () => {
         importScripts('${dir}/dist/hello-indexeddb.js')
         const HelloIndexedDB = window['hello-indexeddb']
         const idb = new HelloIndexedDB({
-            name: 'mydb',
-            version: 2,
+            name: '${DB_NAME}',
+            version: ${DB_VERSION},
             stores: [
                 {
-                    name: 'departs',
-                    primaryKey: 'id',
-                },
-                {
                     name: 'students',
-                    primaryKey: 'id',
+                    keyPath: 'id',
                     indexes: [
                         {
                             name: 'id',
-                            key: 'id',
+                            keyPath: 'id',
                             unique: true,
                         },
                         {

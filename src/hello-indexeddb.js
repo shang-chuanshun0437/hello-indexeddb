@@ -1,13 +1,12 @@
 export default class HelloIndexedDB {
 	constructor(options) {
-		let { name = 'HelloIndexedDB', version = 1, stores, use = 'HelloIndexedDB', key } = options || {}
+		let { name = 'HelloIndexedDB', version = 1, stores, use = 'HelloIndexedDB' } = options || {}
 
 		if (!stores) {
 			stores = [
 				{ 
-					name: use, 
-					primaryKey: key || 'id',
-					autoIncrement: !key,
+					name: use,
+					isKeyValue: true,
 				},
 			]
 		}
@@ -30,7 +29,8 @@ export default class HelloIndexedDB {
 					objectStore = e.target.transaction.objectStore(item.name)
 				}
 				else {
-					objectStore = db.createObjectStore(item.name, { keyPath: item.primaryKey, autoIncrement: item.autoIncrement })
+					let keyPath = item.isKeyValue ? 'key' : item.keyPath
+					objectStore = db.createObjectStore(item.name, { keyPath, autoIncrement: item.autoIncrement })
 				}
 
 				// delete old indexes
@@ -42,7 +42,7 @@ export default class HelloIndexedDB {
 				// add new indexes
 				if (item.indexes && item.indexes.length) {
 					item.indexes.forEach((item) => {
-						objectStore.createIndex(item.name, item.key || item.name, { unique: item.unique })
+						objectStore.createIndex(item.name, item.keyPath || item.name, { unique: item.unique, multiEntry: Array.isArray(item.keyPath) })
 					})
 				}
 
@@ -128,7 +128,7 @@ export default class HelloIndexedDB {
 		let name = this.currentObjectStore
 		return this.transaction(name).then(tx => tx.objectStore(name))
 	}
-	primaryKey() {
+	keyPath() {
 		return this.objectStore().keyPath
 	}
 	request(prepare, success, error, mode = 'readonly') {
@@ -172,7 +172,19 @@ export default class HelloIndexedDB {
 	// ==========================================
 	get(key) {
 		return new Promise((resolve, reject) => {
-			this.request(objectStore => objectStore.get(key), resolve, reject)
+			this.request(objectStore => objectStore.get(key), (data) => {
+				// if the keys is certain structure, which is used to find value of `set(key, value)`
+				if (typeof data === 'object') {
+					let keys = Object.keys(data)
+					keys.sort()
+					if (JSON.stringify(keys) === '["key","type","value"]' && data.type === '$key->$value') {
+						resolve(data.value)
+						return
+					}
+				}
+
+				resolve(data)
+			}, reject)
 		})
 	}
 	keys() {
@@ -355,14 +367,10 @@ export default class HelloIndexedDB {
 			this.request(objectStore => objectStore.put(obj), resolve, reject, 'readwrite')
 		})
 	}
-	set(key, obj) {
+	set(key, value) {
 		return new Promise((resolve, reject) => {
 			this.request(
-				objectStore => {
-					let keyPath = objectStore.keyPath
-					let data = Object.assign({}, obj, { [keyPath]: key })
-					return objectStore.put(data)
-				},
+				objectStore => objectStore.put({ key, value, type: '$key->$value' }),
 				resolve,
 				reject,
 				'readwrite'

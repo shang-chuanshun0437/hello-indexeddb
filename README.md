@@ -58,7 +58,7 @@ let idb = new HelloIndexDB({
   stores: [
     {
       name: 'store1',
-      primaryKey: 'id',
+      keyPath: 'id',
     },
   ],
   use: 'store1',
@@ -80,10 +80,10 @@ Use `new` to creat or update a database.
 
 **options**
 
-- name: required, the name of a indexedDB database. You can see it in your browser dev-tools.
-- version: required, the version of this indexedDB instance.
-- stores: optional, an array to define objectStores. At least one store config should be passed.
-- use: optional, which objectStore to use
+- name: the name of a indexedDB database. You can see it in your browser dev-tools.
+- version: the version of this indexedDB instance.
+- stores: an array to define objectStores. At least one store config should be passed.
+- use: which objectStore to use
 
 Example:
 
@@ -91,18 +91,22 @@ Example:
 // an example of index config
 const index1 = {
   name: 'id', // required
-  key: 'id', // optional
+  keyPath: 'id', // optional
   unique: true, // optional
 }
 // an example of store config
 const store1 = {
   name: 'store1', // required, objectStore name
-  primaryKey: 'id', // required, objectStore keyPath
+  keyPath: 'id', // required, objectStore keyPath
   indexes: [ // optional
     index1,
     index2,
     index3,
   ],
+}
+const store2 = {
+  name: 'store2',
+  isKeyValue: true, // make this store to be key-value store, which can use get(key) to return value directly.
 }
 // an example of options
 const options = {
@@ -117,9 +121,17 @@ const options = {
 const idb = new HelloIndexedDB(options)
 ```
 
-### get(id)
+Use as a pure key-value store as localStorage:
 
-Get a object from indexedDB by its primaryKey.
+```js
+let store = new HelloIndexedDB()
+await store.set('name', 'tomy')
+let name = await store.get('name')
+```
+
+### get(key)
+
+Get a object from indexedDB by its keyPath.
 
 ```js
 let obj = await idb.get('key1')
@@ -129,7 +141,7 @@ let obj = await idb.get('key1')
 ### find(key, value)
 
 Get the first object whose index name is `key` and value is `value`.
-Notice, `key` is a index name.
+Notice, `key` is a indexName.
 
 ```js
 let obj = await idb.find('name', 'tomy')
@@ -140,7 +152,9 @@ If you find a key which is not in indexes, no results will return.
 
 ### query(key, value, compare)
 
-Get objects by one name of its indexes key and certain value. i.e.
+Get objects by one name of its indexes key and certain value. 
+Notice, `key` is a indexName. 
+i.e.
 
 ```js
 let objs = await idb.query('name', 'GoFei')
@@ -163,7 +177,7 @@ Notice `!=` will use `!==`, `=` will use `===`, so you should pass right typeof 
 
 Select objects with multiple conditions. Pass conditions as an array, each condition item contains:
 
-- key: an index name
+- key: an object property
 - value: the value to be found
 - compare: `>` `>=` `<` `<=` `!=` `=` `%`
 - optional: wether to make this condition to be an optional, default 'false' which means 'AND' in SQL.
@@ -194,7 +208,8 @@ let objs = await idb.select([
 NOTICE: the final logic is `A AND B AND C AND (D OR E OR F)`.
 
 `select` is not based on indexes, so it can be used with any property of objects.
-However, it face performance problem. So don't use it as possible.
+
+NOTICE: select do NOT use index to query data, it face performance problem. Don't use indexName to query. So don't use it as possible.
 
 ### all()
 
@@ -223,37 +238,31 @@ Get all records count.
 ### add(obj)
 
 Append a object into your database. 
-Notice, obj's properties should contain primaryKey.
-If obj's primaryKey exists in the objectStore, an error will be thrown.
+Notice, obj's properties should contain keyPath.
+If obj's keyPath exists in the objectStore, an error will be thrown.
 So use `put` instead as possible.
 
 ### put(obj)
 
 Update a object in your database. 
-Notice, your item's properties should contain primaryKey. 
+Notice, your item's properties should contain keyPath. 
 If the object does not exist, it will be added into the database.
 So it is better to use `put` instead of `add` unless you know what you are doing.
 
-### set(id, obj)
-
-- id: primaryKey value
-- obj
+### set(key, value)
 
 key will be merged into obj, i.e.
 
 ```js
-let obj = {
-  id: '1',
-  name: 'tomy',
-}
-await idb.set('2', obj) // { id: '2', name: 'tomy' }
+await idb.set('2', 'tomy')
+let name = await idb.get('2') // tomy
 ```
 
-It is useful to copy record.
+Notice: never use `put` and `set` together on one db.
 
-### delete(id)
+### delete(key)
 
-Delete a object by its primaryKey.
+Delete a object by its keyPath.
 
 ```js
 await idb.delete('1000')
@@ -299,12 +308,12 @@ let objectStore = await idb.objectStore()
 let name = objectStore.name
 ```
 
-### primaryKey()
+### keyPath()
 
-Get primaryKey.
+Get keyPath.
 
 ```js
-let primaryKey = await idb.primaryKey()
+let keyPath = await idb.keyPath()
 ```
 
 ### close()
