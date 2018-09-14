@@ -15,15 +15,19 @@ const _Storage = {
 
 export default class HelloIndexedDB {
 	constructor(options) {
-		let { name = 'HelloIndexedDB', version = 1, stores, use = 'HelloIndexedDB' } = options || {}
+		let { name = 'HelloIndexedDB', version = 1, stores, use } = options || {}
 
-		if (!stores) {
+		if (!stores || !Array.isArray(stores) || !stores.length) {
 			stores = [
 				{ 
-					name: use,
+					name: use || 'HelloIndexedDB',
 					isKeyValue: true,
 				},
 			]
+		}
+
+		if (!use) {
+			use = stores[0].name
 		}
 		
 		let currentStore = stores.find(item => item.name === use)
