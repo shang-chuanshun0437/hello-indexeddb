@@ -160,10 +160,10 @@ it('use', async () => {
     expect(objs).to.deep.equal([{ id: '1', name: 'doge' }])
 })
 
-it('set', async () => {
+it('setItem/getItem', async () => {
     let idb3 = idb.use('tests')
-    await idb3.set('2', 'jiago')
-    let name = await idb3.get('2')
+    await idb3.setItem('2', 'jiago')
+    let name = await idb3.getItem('2')
     expect(name).to.equal('jiago')
 })
 

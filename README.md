@@ -121,14 +121,6 @@ const options = {
 const idb = new HelloIndexedDB(options)
 ```
 
-Use as a pure key-value store as localStorage:
-
-```js
-let store = new HelloIndexedDB()
-await store.set('name', 'tomy')
-let name = await store.get('name')
-```
-
 ### get(key)
 
 Get a object from indexedDB by its keyPath.
@@ -249,17 +241,6 @@ Notice, your item's properties should contain keyPath.
 If the object does not exist, it will be added into the database.
 So it is better to use `put` instead of `add` unless you know what you are doing.
 
-### set(key, value)
-
-key will be merged into obj, i.e.
-
-```js
-await idb.set('2', 'tomy')
-let name = await idb.get('2') // tomy
-```
-
-Notice: never use `put` and `set` together on one db.
-
 ### delete(key)
 
 Delete a object by its keyPath.
@@ -347,6 +328,33 @@ let idb2 = idb.use('store2')
 `use` method is the only method which is not an async function.
 
 The methods of idb2 is the same as idb, but use 'store2' as its current objectStore.
+
+## Storage
+
+Use like a pure key-value Storage such as localStorage:
+
+```js
+let store = new HelloIndexedDB()
+await store.setItem('name', 'tomy')
+let name = await store.getItem('name')
+```
+
+For this feature, you should create a store which has `isKeyValue` property to be `true`:
+
+```js
+// a store config
+const store1 = {
+  name: 'my-key-value-store',
+  isKeyValue: true,
+}
+```
+
+Then you can use this store with `getItem` `setItem` `removeItem`:
+
+```js
+let kvdb = idb.use('my-key-value-store')
+let value = await kvdb.getItem(key)
+```
 
 ## test
 

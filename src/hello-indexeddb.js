@@ -1,3 +1,18 @@
+const _Storage = {
+	key(i) {
+		return this.keys().then(keys => kyes && keys[i])
+	},
+	getItem(key) {
+		return this.get(key).then(obj => obj && obj.value)
+	},
+	setItem(key, value) {
+		return this.put({ key, value })
+	},
+	removeItem(key) {
+		return this.delete(key)
+	},
+}
+
 export default class HelloIndexedDB {
 	constructor(options) {
 		let { name = 'HelloIndexedDB', version = 1, stores, use = 'HelloIndexedDB' } = options || {}
@@ -10,11 +25,19 @@ export default class HelloIndexedDB {
 				},
 			]
 		}
+		
+		let currentStore = stores.find(item => item.name === use)
+		// if it is a key-value store, append special methods
+		if (currentStore.isKeyValue) {
+			this.key = _Storage.key.bind(this)
+			this.getItem = _Storage.getItem.bind(this)
+			this.setItem = _Storage.setItem.bind(this)
+			this.removeItem = _Storage.removeItem.bind(this)
+		}
 
 		this.name = name
 		this.version = version
-
-		this.currentObjectStore = use
+		this.currentStore = currentStore
 		this._runtimes = {}
 		
 		let request = self.indexedDB.open(name, version)
@@ -84,7 +107,7 @@ export default class HelloIndexedDB {
 		})
 	}
 	transaction(mode = 'readonly') {
-		let name = this.currentObjectStore
+		let name = this.currentStore.name
 		const wrap = (tx) => {
 			let runtime = {
 				mode,
@@ -126,24 +149,50 @@ export default class HelloIndexedDB {
 	}
 	// =======================================
 	objectStore() {
+		let name = this.currentStore.name
 		return this.transaction().then(tx => tx.objectStore(name))
 	}
 	keyPath() {
 		return this.objectStore().keyPath
 	}
 	request(prepare, success, error, mode = 'readonly') {
-		let name = this.currentObjectStore
+		let name = this.currentStore.name
+		/**
+		 * @example
+		 * this.request(objectStore => objectStore.get(key)).then(obj => console.log(obj))
+		 */
+		if (arguments.length <= 2 && (typeof success === 'string' || typeof success === 'undefined')) {
+			mode = success || 'readonly'
+			success = null
+		}
+
+		let handler = {
+			resolve() {},
+			reject() {},
+		}
+		let fail = (e) => {
+			if (typeof error === 'function') {
+				error(e)
+			}
+			handler.reject(e)
+		}
+		let finish = (result) => {
+			if (typeof success === 'function') {
+				success(result)
+			}
+			handler.resolve(result)
+		}
+		
 		return this.transaction(mode).then((tx) => {
 			let objectStore = tx.objectStore(name)
 			let request = prepare(objectStore)
-			request.onsuccess = (e) => {
-				success(e.target.result)
-			}
-			request.onerror = (e) => {
-				typeof error === 'function' && error(e)
-			}
-		}).catch((e) => {
-			typeof error === 'function' && error(e)
+			let defer = new Promise((resolve, reject) => {
+				handler.resolve = resolve
+				handler.reject = reject
+			})
+			request.onsuccess = (e) => finish(e.target.result)
+			request.onerror = (e) => fail(e)
+			return defer
 		})
 	}
 	each(fn, direction) {
@@ -171,32 +220,18 @@ export default class HelloIndexedDB {
 	}
 	// ==========================================
 	get(key) {
-		return new Promise((resolve, reject) => {
-			this.request(objectStore => objectStore.get(key), (data) => {
-				// if the keys is certain structure, which is used to find value of `set(key, value)`
-				if (typeof data === 'object') {
-					let keys = Object.keys(data)
-					keys.sort()
-					if (JSON.stringify(keys) === '["__type__","key","value"]' && data.__type__ === '$key->$value') {
-						resolve(data.value)
-						return
-					}
-				}
-
-				resolve(data)
-			}, reject)
-		})
+		return this.request(objectStore => objectStore.get(key))
 	}
 	keys() {
-		return new Promise((resolve, reject) => {
-			this.request(objectStore => objectStore.getAllKeys(), resolve, reject)
-		})
+		return this.request(objectStore => objectStore.getAllKeys())
 	}
 	all() {
-		return new Promise((resolve, reject) => {
-			this.request(objectStore => objectStore.getAll(), resolve, reject)
-		})
+		return this.request(objectStore => objectStore.getAll())
 	}
+	count() {
+		return this.request(objectStore => objectStore.count())
+	}
+	// ==========================================
 	first() {
 		return new Promise((resolve, reject) => {
 			this.each((item, i, cursor, finish) => {
@@ -233,22 +268,10 @@ export default class HelloIndexedDB {
 			this.request(objectStore => objectStore.getAll(null, count), resolve, reject)
 		})
 	}
-	count() {
-		return new Promise((resolve, reject) => {
-			this.request(objectStore => objectStore.count(), resolve, reject)
-		})
-	}
-	// ==========================================
 	find(key, value) {
-		return new Promise((resolve, reject) => {
-			this.request(
-				objectStore => {
-					let index = objectStore.index(key)
-					return index.get(value)
-				},
-				resolve, 
-				reject
-			)
+		return this.request(objectStore => {
+			let index = objectStore.index(key)
+			return index.get(value)
 		})
 	}
 	query(key, value, compare) {
@@ -358,33 +381,15 @@ export default class HelloIndexedDB {
 	}
 	// =====================================
 	add(obj) {
-		return new Promise((resolve, reject) => {
-			this.request(objectStore => objectStore.add(obj), resolve, reject, 'readwrite')
-		})
+		return this.request(objectStore => objectStore.add(obj), 'readwrite')
 	}
 	put(obj) {
-		return new Promise((resolve, reject) => {
-			this.request(objectStore => objectStore.put(obj), resolve, reject, 'readwrite')
-		})
-	}
-	set(key, value) {
-		return new Promise((resolve, reject) => {
-			this.request(
-				objectStore => objectStore.put({ key, value, __type__: '$key->$value' }),
-				resolve,
-				reject,
-				'readwrite'
-			)
-		})
+		return this.request(objectStore => objectStore.put(obj), 'readwrite')
 	}
 	delete(key) {
-		return new Promise((resolve, reject) => {
-			this.request(objectStore => objectStore.delete(key), resolve, reject, 'readwrite')
-		})
+		return this.request(objectStore => objectStore.delete(key), 'readwrite')
 	}
 	clear() {
-		return new Promise((resolve, reject) => {
-			this.request(objectStore => objectStore.clear(), resolve, reject, 'readwrite')
-		})
+		return this.request(objectStore => objectStore.clear(), 'readwrite')
 	}
 }
