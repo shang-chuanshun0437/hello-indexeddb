@@ -57,7 +57,8 @@ export default class HelloIndexedDB {
 				}
 				else {
 					let keyPath = item.isKeyValue ? 'key' : item.keyPath
-					objectStore = db.createObjectStore(item.name, { keyPath, autoIncrement: item.autoIncrement })
+					let autoIncrement = item.isKeyValue ? false : item.autoIncrement
+					objectStore = db.createObjectStore(item.name, { keyPath, autoIncrement })
 				}
 
 				// delete old indexes
