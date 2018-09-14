@@ -1,18 +1,3 @@
-const _Storage = {
-	key(i) {
-		return this.keys().then(keys => kyes && keys[i])
-	},
-	getItem(key) {
-		return this.get(key).then(obj => obj && obj.value)
-	},
-	setItem(key, value) {
-		return this.put({ key, value })
-	},
-	removeItem(key) {
-		return this.delete(key)
-	},
-}
-
 export default class HelloIndexedDB {
 	constructor(options) {
 		let { name = 'HelloIndexedDB', version = 1, stores, use } = options || {}
@@ -33,10 +18,10 @@ export default class HelloIndexedDB {
 		let currentStore = stores.find(item => item.name === use)
 		// if it is a key-value store, append special methods
 		if (currentStore.isKeyValue) {
-			this.key = _Storage.key.bind(this)
-			this.getItem = _Storage.getItem.bind(this)
-			this.setItem = _Storage.setItem.bind(this)
-			this.removeItem = _Storage.removeItem.bind(this)
+			this.key = i => this.keys().then(keys => kyes && keys[i])
+			this.getItem = key => this.get(key).then(obj => obj && obj.value)
+			this.setItem = (key, value) => this.put({ key, value })
+			this.removeItem = key => this.delete(key)
 		}
 
 		this.name = name
