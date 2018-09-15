@@ -338,10 +338,12 @@ export default class HelloIndexedDB {
 						return a < b
 					case '<=':
 						return a <= b
-					case '%':
-						return typeof a === 'string' && a.indexOf(b) > -1
 					case '!=':
 						return a !== b
+					case '%':
+						return typeof a === 'string' && a.indexOf(b) > -1
+					case 'in':
+						return Array.isArray(b) && b.indexOf(a) > -1
 					default:
 						return a === b
 				}
