@@ -161,9 +161,11 @@ If you give a index name which is not in indexes options, no results will return
 
 **compare**
 
-Choose from `>` `>=` `<` `<=` `!=` `=` `%`. 
+Choose from `>` `>=` `<` `<=` `=` `!=` `%` `in`. 
 `%` means 'LIKE', only used for string search.
+`in` means 'IN', value should be an array.
 Notice `!=` will use `!==`, `=` will use `===`, so you should pass right typeof of value.
+`!=` `%` and `in` are not supported by indexedDB default, so you should make indexName and indexKeyPath same when use these.
 
 ### select([{ key, value, compare, optional }])
 

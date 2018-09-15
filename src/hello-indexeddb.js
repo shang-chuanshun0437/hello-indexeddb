@@ -278,6 +278,7 @@ export default class HelloIndexedDB {
 						return IDBKeyRange.upperBound(value)
 					case '%':
 					case '!=':
+					case 'in':
 						return undefined
 					default:
 						return IDBKeyRange.only(value)
@@ -291,13 +292,19 @@ export default class HelloIndexedDB {
 				},
 				cursor => {
 					if (cursor) {
+						let current = cursor.value[key]
 						if (compare === '!=') {
-							if (cursor.value[key] !== value) {
+							if (current !== value) {
 								results.push(cursor.value)
 							}
 						}
 						else if (compare === '%') {
-							if (typeof cursor.value[key] == 'string' && cursor.value[key].indexOf(value) > -1) {
+							if (typeof current == 'string' && current.indexOf(value) > -1) {
+								results.push(cursor.value)
+							}
+						}
+						else if (compare === 'in') {
+							if (Array.isArray(value) && value.indexOf(current) > -1) {
 								results.push(cursor.value)
 							}
 						}
