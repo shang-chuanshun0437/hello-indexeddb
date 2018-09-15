@@ -130,7 +130,7 @@ let obj = await idb.get('key1')
 // { id: 'key1', value: 'value1' }
 ```
 
-### find(key, value)
+### find(indexName, value)
 
 Get the first object whose index name is `key` and value is `value`.
 Notice, `key` is a indexName.
@@ -142,7 +142,7 @@ let obj = await idb.find('name', 'tomy')
 
 If you find a key which is not in indexes, no results will return.
 
-### query(key, value, compare)
+### query(indexName, value, compare)
 
 Get objects by one name of its indexes key and certain value. 
 Notice, `key` is a indexName. 
@@ -208,6 +208,14 @@ NOTICE: select do NOT use index to query data, it face performance problem. Don'
 ### all()
 
 Get all records from your objectStore.
+
+### first()
+
+Get the first record from current objectStore.
+
+### last()
+
+Get the last record from current objectStore.
 
 ### some(count, offset)
 
