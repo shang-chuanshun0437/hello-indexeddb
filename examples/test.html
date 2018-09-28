@@ -12,7 +12,7 @@
 const HelloIndexedDB = window['hello-indexeddb']
 const HelloWebWorker = window['hello-webworker']
 const DB_NAME = 'my-test-idb'
-const DB_VERSION = 1
+const DB_VERSION = 2
 const idb = new HelloIndexedDB({
     name: DB_NAME,
     version: DB_VERSION,
@@ -40,9 +40,12 @@ const idb = new HelloIndexedDB({
             ],
         },
         {
-            name: 'tests',
+            name: 'keyvalue',
             isKeyValue: true,
         },
+        {
+            name: 'cleartest',
+        }
     ],
     use: 'students',
 })
@@ -52,6 +55,7 @@ mocha.setup('bdd')
 
 // ------------------------- tests --------------------
 it('add', async () => {
+    await idb.clear()
     let obj = await idb.get('1')
     if (obj) {
         let flag = false
@@ -160,13 +164,15 @@ it('select', async () => {
 
 it('use', async () => {
     let idb2 = idb.use('departs')
+    await idb2.clear()
     await idb2.put({ id: '1', name: 'doge' })
     let objs = await idb2.all()
     expect(objs).to.deep.equal([{ id: '1', name: 'doge' }])
 })
 
 it('setItem/getItem/removeItem', async () => {
-    let idb3 = idb.use('tests')
+    let idb3 = idb.use('keyvalue')
+    await idb3.clear()
     await idb3.setItem('2', 'jiago')
     let name = await idb3.getItem('2')
     expect(name).to.equal('jiago')
@@ -176,7 +182,7 @@ it('setItem/getItem/removeItem', async () => {
 })
 
 it('clear', async () => {
-    let idb2 = idb.use('departs')
+    let idb2 = idb.use('cleartest')
     await idb2.clear()
     let count = await idb2.count()
     expect(count).to.equal(0)

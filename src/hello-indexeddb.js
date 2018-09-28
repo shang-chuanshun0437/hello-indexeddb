@@ -14,23 +14,27 @@ export default class HelloIndexedDB {
 		if (!use) {
 			use = stores[0].name
 		}
-		
-		let currentStore = stores.find(item => item.name === use)
-		// if it is a key-value store, append special methods
-		if (currentStore.isKeyValue) {
-			this.key = i => this.keys().then(keys => kyes && keys[i])
-			this.getItem = key => this.get(key).then(obj => obj && obj.value)
-			this.setItem = (key, value) => this.put({ key, value })
-			this.removeItem = key => this.delete(key)
-		}
 
+		let currentStore = stores.find(item => item.name === use)
+		
 		this.name = name
 		this.version = version
+		this.stores = stores
 		this.currentStore = currentStore
-		this._runtimes = {}
-		
+		this.runtimes = {}
+
+		// if it is a key-value store, append special methods
+		if (currentStore.isKeyValue) {
+			Object.defineProperties(this, {
+				key: { value: i => this.keys().then(keys => keys && keys[i]) },
+				getItem: { value: key => this.get(key).then(obj => obj && obj.value) },
+				setItem: { value: (key, value) => this.put({ key, value }) },
+				removeItem: { value: key => this.delete(key) },
+			})
+		}
+
 		let request = self.indexedDB.open(name, version)
-		request.onupgradeneeded = e => {
+		request.onupgradeneeded = (e) => {
 			let db = e.target.result
 			let existStoreNames = Array.from(db.objectStoreNames)
 			let passStoreNames = []
@@ -87,11 +91,12 @@ export default class HelloIndexedDB {
 		return new HelloIndexedDB({
 			name: this.name,
 			version: this.version,
+			stores: this.stores,
 			use: name,
 		})
 	}
 	close() {
-		this._runtimes = null
+		this.runtimes = null
 		return this.db().then((db) => {
 			db.close()
 		})
@@ -116,23 +121,23 @@ export default class HelloIndexedDB {
 		const request = () => {
 			return this.db().then((db) => {
 				let tx = db.transaction(name, mode)
-				this._runtimes[name] = wrap(tx)
+				this.runtimes[name] = wrap(tx)
 				tx.oncomplete = () => {
-					this._runtimes[name].expire()
+					this.runtimes[name].expire()
 				}
 				tx.onerror = () => {
-					this._runtimes[name].expire()
+					this.runtimes[name].expire()
 				}
 				tx.onabort = () => {
-					this._runtimes[name].expire()
+					this.runtimes[name].expire()
 				}
 				return tx
 			})
 		}
 
 		// if a written transaction is running, wait until it finish
-		if (this._runtimes[name] && this._runtimes[name].state && this._runtimes[name].mode === 'readwrite') {
-			return this._runtimes[name].defer.then(request)
+		if (this.runtimes[name] && this.runtimes[name].state && this.runtimes[name].mode === 'readwrite') {
+			return this.runtimes[name].defer.then(request)
 		}
 		
 		return request()
@@ -145,52 +150,44 @@ export default class HelloIndexedDB {
 	keyPath() {
 		return this.objectStore().then(objectStore => objectStore.keyPath)
 	}
-	request(prepare, success, error, mode = 'readonly') {
-		let name = this.currentStore.name
-		/**
-		 * @example
-		 * this.request(objectStore => objectStore.get(key)).then(obj => console.log(obj))
-		 */
-		if (arguments.length <= 2 && (typeof success === 'string' || typeof success === 'undefined')) {
-			mode = success || 'readonly'
-			success = null
-		}
-
-		let handler = {
-			resolve() {},
-			reject() {},
-		}
-		let fail = (e) => {
-			if (typeof error === 'function') {
-				error(e)
-			}
-			handler.reject(e)
-		}
-		let finish = (result) => {
-			if (typeof success === 'function') {
-				success(result)
-			}
-			handler.resolve(result)
-		}
-		
-		return this.transaction(mode).then((tx) => {
-			let objectStore = tx.objectStore(name)
-			let request = prepare(objectStore)
-			let defer = new Promise((resolve, reject) => {
-				handler.resolve = resolve
-				handler.reject = reject
+	/**
+	 * @example
+	 * idb.request(objectStore => objectStore.get(key)).then(obj => console.log(obj))
+	 */
+	request(prepare, mode = 'readonly', success, error) {
+		let name = this.currentStore.name		
+		return this.transaction(mode)
+		.then((tx) => {
+			return new Promise((resolve, reject) => {
+				let objectStore = tx.objectStore(name)
+				let request = prepare(objectStore)
+				request.onsuccess = (e) => {
+					let result = e.target.result
+					if (typeof success === 'function') {
+						success(result)
+					}
+					else {
+						resolve(result)
+					}
+				}
+				request.onerror = (e) => {
+					if (typeof error === 'function') {
+						error(e)
+					}
+					else {
+						reject(e)
+					}
+				}
 			})
-			request.onsuccess = (e) => finish(e.target.result)
-			request.onerror = (e) => fail(e)
-			return defer
 		})
 	}
 	each(fn, mode = 'readonly', _direction) {
 		return new Promise((resolve, reject) => {
 			let i = 0
 			this.request(
-				objectStore => objectStore.openCursor(null, _direction),
-				cursor => {
+				objectStore => objectStore.openCursor(null, _direction), 
+				mode,
+				(cursor) => {
 					if (cursor) {
 						fn(cursor.value, i ++, cursor, resolve, reject)
 						if (fn.length < 3) {
@@ -201,8 +198,7 @@ export default class HelloIndexedDB {
 						resolve()
 					}
 				},
-				reject,
-				mode,
+				reject
 			)
 		})
 	}
@@ -228,7 +224,8 @@ export default class HelloIndexedDB {
 			this.each((item, i, cursor, finish) => {
 				finish()
 				resolve(item)
-			}).catch(reject)
+			})
+			.catch(reject)
 		})
 	}
 	last() {
@@ -253,17 +250,15 @@ export default class HelloIndexedDB {
 						return
 					}
 					cursor.continue()
-				}).then(() => resolve(results)).catch(reject)
+				})
+				.then(() => resolve(results)).catch(reject)
 				return
 			}
-			this.request(objectStore => objectStore.getAll(null, count), resolve, reject)
+			this.request(objectStore => objectStore.getAll(null, count)).then(resolve).catch(reject)
 		})
 	}
 	find(key, value) {
-		return this.request(objectStore => {
-			let index = objectStore.index(key)
-			return index.get(value)
-		})
+		return this.request(objectStore => objectStore.index(key).get(value))
 	}
 	query(key, value, compare) {
 		return new Promise((resolve, reject) => {
@@ -287,11 +282,12 @@ export default class HelloIndexedDB {
 			}())
 			let results = []
 			this.request(
-				objectStore => {
+				(objectStore) => {
 					let index = objectStore.index(key)
 					return index.openCursor(range)
 				},
-				cursor => {
+				'readonly',
+				(cursor) => {
 					if (cursor) {
 						let current = cursor.value[key]
 						if (compare === '!=') {
@@ -317,7 +313,7 @@ export default class HelloIndexedDB {
 					else {
 						resolve(results)
 					}
-				}, 
+				},
 				reject,
 			)
 		})
@@ -377,7 +373,8 @@ export default class HelloIndexedDB {
 			if (determine(value)) {
 				results.push(value)
 			}
-		}).then(() => results)
+		})
+		.then(() => results)
 	}
 	// =====================================
 	add(obj) {
