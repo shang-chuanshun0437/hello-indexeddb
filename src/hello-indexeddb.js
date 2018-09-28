@@ -143,7 +143,7 @@ export default class HelloIndexedDB {
 		return this.transaction().then(tx => tx.objectStore(name))
 	}
 	keyPath() {
-		return this.objectStore().keyPath
+		return this.objectStore().then(objectStore => objectStore.keyPath)
 	}
 	request(prepare, success, error, mode = 'readonly') {
 		let name = this.currentStore.name
