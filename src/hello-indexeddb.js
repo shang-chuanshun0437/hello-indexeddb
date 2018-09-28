@@ -185,11 +185,11 @@ export default class HelloIndexedDB {
 			return defer
 		})
 	}
-	each(fn, direction) {
+	each(fn, mode = 'readonly', _direction) {
 		return new Promise((resolve, reject) => {
 			let i = 0
 			this.request(
-				objectStore => objectStore.openCursor(null, direction),
+				objectStore => objectStore.openCursor(null, _direction),
 				cursor => {
 					if (cursor) {
 						fn(cursor.value, i ++, cursor, resolve, reject)
@@ -202,11 +202,12 @@ export default class HelloIndexedDB {
 					}
 				},
 				reject,
+				mode,
 			)
 		})
 	}
-	reverse(fn) {
-		return this.each(fn, 'prev')
+	reverse(fn, mode = 'readonly') {
+		return this.each(fn, mode, 'prev')
 	}
 	// ==========================================
 	get(key) {
