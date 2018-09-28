@@ -54,8 +54,17 @@ const expect = chai.expect
 mocha.setup('bdd')
 
 // ------------------------- tests --------------------
-it('add', async () => {
+it('when there is no data in db, test .first()', async () => {
     await idb.clear()
+    try {
+        await idb.first()
+    }
+    catch(e) {
+        expect(e.message).to.equal('there is no record in the store')
+    }
+})
+
+it('add', async () => {
     let obj = await idb.get('1')
     if (obj) {
         let flag = false

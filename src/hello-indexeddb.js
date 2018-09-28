@@ -194,6 +194,9 @@ export default class HelloIndexedDB {
 							cursor.continue()
 						}
 					}
+					else if (i === 0) {
+						reject(new Error('there is no record in the store'))
+					}
 					else {
 						resolve()
 					}
