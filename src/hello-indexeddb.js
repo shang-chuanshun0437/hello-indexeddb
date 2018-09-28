@@ -164,7 +164,7 @@ export default class HelloIndexedDB {
 				request.onsuccess = (e) => {
 					let result = e.target.result
 					if (typeof success === 'function') {
-						success(result)
+						success(result, resolve)
 					}
 					else {
 						resolve(result)
@@ -172,7 +172,7 @@ export default class HelloIndexedDB {
 				}
 				request.onerror = (e) => {
 					if (typeof error === 'function') {
-						error(e)
+						error(e, reject)
 					}
 					else {
 						reject(e)
