@@ -25,12 +25,10 @@ export default class HelloIndexedDB {
 
 		// if it is a key-value store, append special methods
 		if (currentStore.isKeyValue) {
-			Object.defineProperties(this, {
-				key: { value: i => this.keys().then(keys => keys && keys[i]) },
-				getItem: { value: key => this.get(key).then(obj => obj && obj.value) },
-				setItem: { value: (key, value) => this.put({ key, value }) },
-				removeItem: { value: key => this.delete(key) },
-			})
+			this.key = i => this.keys().then(keys => keys && keys[i])
+			this.getItem = key => this.get(key).then(obj => obj && obj.value)
+			this.setItem = (key, value) => this.put({ key, value })
+			this.removeItem = key => this.delete(key)
 		}
 
 		let request = self.indexedDB.open(name, version)
