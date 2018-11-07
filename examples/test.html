@@ -12,7 +12,7 @@
 const HelloIndexedDB = window['hello-indexeddb']
 const HelloWebWorker = window['hello-webworker']
 const DB_NAME = 'my-test-idb'
-const DB_VERSION = 2
+const DB_VERSION = 3
 const idb = new HelloIndexedDB({
     name: DB_NAME,
     version: DB_VERSION,
@@ -45,7 +45,7 @@ const idb = new HelloIndexedDB({
         },
         {
             name: 'cleartest',
-        }
+        },
     ],
     use: 'students',
 })
@@ -171,6 +171,7 @@ it('select', async () => {
     expect(objs.length).to.equal(3)
 })
 
+
 it('use', async () => {
     let idb2 = idb.use('departs')
     await idb2.clear()
@@ -178,6 +179,13 @@ it('use', async () => {
     let objs = await idb2.all()
     expect(objs).to.deep.equal([{ id: '1', name: 'doge' }])
 })
+
+it('keys in autoincrease store', async () => {
+    let idb2 = idb.use('departs')
+    let keys = await idb2.keys()
+    expect(keys).to.deep.equal(['1'])
+})
+
 
 it('setItem/getItem/removeItem', async () => {
     let idb3 = idb.use('keyvalue')
