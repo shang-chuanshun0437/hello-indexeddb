@@ -29,7 +29,7 @@ else {
   root['hello-indexeddb'] = HelloIndexedDB;
 }
 
-})(typeof self !== 'undefined' ? self : typeof global !== 'undefined' ? global : this);
+})(typeof window !== 'undefined' ? window : typeof global !== 'undefined' ? global : typeof self !== 'undefined' ? self : this);
     `
     content = content.trim()
     content += "\n"
